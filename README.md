@@ -71,9 +71,10 @@ bxperience/
 Proyek ini sebagian besar menggunakan Java SE (Standard Edition), namun tergantung modul tertentu, dapat menggunakan:
 
 - **Swing** – Untuk pembuatan UI desktop
-- **JavaBeans Binding (org.jdesktop.beansbinding)** – Untuk binding antar komponen UI dan data
-- **JDatePicker atau JCalendar** – Jika digunakan, untuk input tanggal
+- **JavaBeans Binding (org.jdesktop.beansbinding)** – Untuk binding antar komponen UI dan data.
+- **JDatePicker atau JCalendar** – Jika digunakan, untuk input tanggal.
 - **Apache Commons (opsional)** – Untuk utilitas string, IO, dll.
+- **Jconnector** - Untuk menghubungkan ke SQL Database.
 
 > *Catatan:* Pastikan semua `.jar` tambahan diletakkan di folder `lib/` (jika tersedia) dan di-link melalui project properties di NetBeans.
 
