@@ -1,0 +1,21 @@
+# Build output
+build/
+dist/
+manifest.mf
+
+# NetBeans private files
+nbproject/private/
+nbproject/genfiles.properties
+
+# macOS system files
+.DS_Store
+
+# Generated sources
+build/generated-sources/
+build/classes/
+build/empty/
+
+# Database file
+bxperience (1).sql
+
+libs/
