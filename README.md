@@ -11,3 +11,5 @@ Byebeli Experience Admin System adalah aplikasi berbasis Java yang dirancang unt
 - **Login Admin**: Sistem login untuk memastikan keamanan akses ke panel admin.
 
 ## Struktur Proyek
+src/ ├── connection/ # Koneksi database ├── img/ # Gambar dan ikon ├── javaapplication1/ # MainFrame aplikasi ├── tampilan/ # Semua tampilan GUI │ ├── aset/ # Panel untuk manajemen aset │ ├── booking/ # Panel untuk penyewaan dan booking │ ├── monitoring/ # Panel untuk monitoring data │ ├── utama/ # Panel utama seperti login dan home │ ├── util/ # Utility seperti styling UI test/ # Unit test libs/ # Library eksternal
+

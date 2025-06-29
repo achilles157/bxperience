@@ -324,20 +324,29 @@ public class AsetManajemenPanel extends JPanel {
                     
                     int successCount = 0;
                     for (int result : results) {
-                        if (result > 0) successCount++;
+                        // Di beberapa JDBC driver, SUCCESS_NO_INFO (-2) juga berarti berhasil
+                        if (result > 0 || result == Statement.SUCCESS_NO_INFO) {
+                            successCount++;
+                        }
                     }
                     
                     JOptionPane.showMessageDialog(this, 
-                        "Berhasil menghapus " + successCount + " dari " + results.length + " aset.",
+                        "Berhasil menghapus " + successCount + " dari " + results.length + " aset beserta data terkaitnya.",
                         "Info", JOptionPane.INFORMATION_MESSAGE);
                         
-                    refreshData();
+                    refreshData(); // Muat ulang data tabel
+                } catch (SQLException ex) {
+                    conn.rollback(); // Jika terjadi error, batalkan semua perubahan dalam transaksi
+                    ex.printStackTrace();
+                    JOptionPane.showMessageDialog(this, 
+                        "Gagal menghapus data (transaksi dibatalkan): " + ex.getMessage(), 
+                        "Error", JOptionPane.ERROR_MESSAGE);
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
                 JOptionPane.showMessageDialog(this, 
-                    "Gagal menghapus data: " + ex.getMessage(), 
-                    "Error", JOptionPane.ERROR_MESSAGE);
+                    "Gagal mendapatkan koneksi ke database: " + ex.getMessage(), 
+                    "Error Koneksi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
