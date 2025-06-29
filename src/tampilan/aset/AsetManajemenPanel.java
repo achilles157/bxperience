@@ -284,22 +284,43 @@ public class AsetManajemenPanel extends JPanel {
 
         int confirm = JOptionPane.showConfirmDialog(this, 
             "Apakah Anda yakin ingin menghapus " + selectedRows.length + " aset berikut?\n" + 
-            String.join(", ", namesToDelete), 
-            "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION);
+            String.join(", ", namesToDelete) + 
+            "\n\nPERINGATAN: Semua riwayat booking dan penyewaan terkait aset ini juga akan dihapus.", 
+            "Konfirmasi Hapus", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
             
         if (confirm == JOptionPane.YES_OPTION) {
+            // Menggunakan try-with-resources untuk memastikan koneksi ditutup
             try (Connection conn = DatabaseConnection.getConnection()) {
-                conn.setAutoCommit(false);
-                String deleteSql = "DELETE FROM aset WHERE id_aset=?";
+                conn.setAutoCommit(false); // Memulai transaksi
+
+                // Query untuk menghapus dari tabel anak terlebih dahulu
+                String deletePlayAtHomeDetailSql = "DELETE FROM playathome_detail WHERE id_aset=?";
+                String deleteBookingDetailSql = "DELETE FROM booking_detail WHERE id_aset=?";
+                String deleteAsetSql = "DELETE FROM aset WHERE id_aset=?";
                 
-                try (PreparedStatement pst = conn.prepareStatement(deleteSql)) {
+                // Gunakan PreparedStatement untuk setiap query di dalam transaksi
+                try (PreparedStatement pstPlayAtHome = conn.prepareStatement(deletePlayAtHomeDetailSql);
+                     PreparedStatement pstBooking = conn.prepareStatement(deleteBookingDetailSql);
+                     PreparedStatement pstAset = conn.prepareStatement(deleteAsetSql)) {
+
                     for (String id : idsToDelete) {
-                        pst.setString(1, id);
-                        pst.addBatch();
+                        // Tambahkan perintah ke batch untuk setiap tabel
+                        pstPlayAtHome.setString(1, id);
+                        pstPlayAtHome.addBatch();
+
+                        pstBooking.setString(1, id);
+                        pstBooking.addBatch();
+                        
+                        pstAset.setString(1, id);
+                        pstAset.addBatch();
                     }
                     
-                    int[] results = pst.executeBatch();
-                    conn.commit();
+                    // Eksekusi semua batch
+                    pstPlayAtHome.executeBatch(); // Hapus dari playathome_detail
+                    pstBooking.executeBatch();    // Hapus dari booking_detail
+                    int[] results = pstAset.executeBatch(); // Hapus dari aset
+                    
+                    conn.commit(); // Jika semua berhasil, commit transaksi
                     
                     int successCount = 0;
                     for (int result : results) {
