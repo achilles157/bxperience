@@ -1,12 +1,5 @@
 # ![Byebeli Experience Admin System](https://yourdomain.com/logo.png)
 
-_By Tim BXperience Devs_  
-![GitHub last commit](https://img.shields.io/github/last-commit/yourusername/bxperience)  
-![GitHub repo size](https://img.shields.io/github/repo-size/yourusername/bxperience)  
-![GitHub issues](https://img.shields.io/github/issues/yourusername/bxperience)
-
----
-
 Byebeli Experience Admin System adalah aplikasi berbasis Java yang dirancang untuk mengelola penyewaan alat gaming, pemantauan aset, dan pengalaman pelanggan. Sistem ini menyediakan fitur lengkap untuk administrasi penyewaan, manajemen aset, dan pelaporan.
 
 ---
