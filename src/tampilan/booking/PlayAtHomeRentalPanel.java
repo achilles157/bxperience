@@ -1,9 +1,10 @@
 package tampilan.booking;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
 import java.sql.*;
 import connection.DatabaseConnection;
 import tampilan.util.UIStyle;
@@ -12,19 +13,26 @@ public class PlayAtHomeRentalPanel extends JPanel {
     private JTable rentalTable;
     private DefaultTableModel tableModel;
     private JButton backButton, selesaiButton;
-    private JLabel titleLabel; // Declare titleLabel as a class-level field
+    private JLabel titleLabel;
 
     public PlayAtHomeRentalPanel() {
         setLayout(new BorderLayout(20, 20));
         setBackground(UIStyle.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Hapus duplikasi deklarasi titleLabel
+        // Header Panel
+        JPanel headerPanel = new UIStyle.RoundedPanel(20, false);
+        headerPanel.setLayout(new BorderLayout());
+        headerPanel.setBackground(UIStyle.PRIMARY);
+        headerPanel.setPreferredSize(new Dimension(1024, 80));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 30));
+
         titleLabel = new JLabel("DATA PENYEWAAN PLAY AT HOME", SwingConstants.CENTER);
-        titleLabel.setFont(UIStyle.fontBold(22));
-        titleLabel.setForeground(UIStyle.PRIMARY);
-        add(titleLabel, BorderLayout.NORTH);
-    
+        titleLabel.setFont(UIStyle.fontBold(24));
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        
+        add(headerPanel, BorderLayout.NORTH);
         add(createTablePanel(), BorderLayout.CENTER);
         add(createButtonPanel(), BorderLayout.SOUTH);
         
@@ -52,11 +60,55 @@ public class PlayAtHomeRentalPanel extends JPanel {
         };
 
         rentalTable = new JTable(tableModel);
+        UIStyle.styleTable(rentalTable);
         rentalTable.setFillsViewportHeight(true);
-        rentalTable.setRowHeight(24);
+        rentalTable.setRowHeight(30);
         rentalTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        
+        // Custom renderer for status column
+        rentalTable.getColumnModel().getColumn(12).setCellRenderer(new StatusRenderer());
 
-        return new JScrollPane(rentalTable);
+        JScrollPane scrollPane = new JScrollPane(rentalTable);
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(
+            new javax.swing.border.LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(5, 5, 5, 5)
+        ));
+        
+        return scrollPane;
+    }
+    
+    // Custom renderer for status column
+    private class StatusRenderer extends DefaultTableCellRenderer {
+        public StatusRenderer() {
+            setHorizontalAlignment(JLabel.CENTER);
+            setOpaque(true);
+        }
+        
+        @Override
+        public Component getTableCellRendererComponent(JTable table, Object value, 
+                boolean isSelected, boolean hasFocus, int row, int column) {
+            Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+            
+            if (value != null) {
+                String status = value.toString().toLowerCase();
+                if (status.equals("aktif")) {
+                    c.setBackground(UIStyle.SUCCESS_COLOR);
+                    c.setForeground(Color.WHITE);
+                } else if (status.equals("selesai")) {
+                    c.setBackground(UIStyle.SECONDARY);
+                    c.setForeground(Color.WHITE);
+                } else {
+                    c.setBackground(UIStyle.WARNING_COLOR);
+                    c.setForeground(Color.WHITE);
+                }
+            }
+            
+            if (isSelected) {
+                c.setBackground(c.getBackground().darker());
+            }
+            
+            return c;
+        }
     }
 
     private JPanel createButtonPanel() {
@@ -65,8 +117,10 @@ public class PlayAtHomeRentalPanel extends JPanel {
         panel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
     
         // Tombol Selesai
-        selesaiButton = new JButton("Tandai Selesai");
-        styleButton(selesaiButton, UIStyle.SUCCESS_COLOR); // Warna hijau untuk aksi positif
+        selesaiButton = new UIStyle.RoundedButton("Tandai Selesai", 8);
+        selesaiButton.setBackground(UIStyle.SUCCESS_COLOR);
+        selesaiButton.setForeground(Color.WHITE);
+        selesaiButton.setFont(UIStyle.fontBold(14));
         selesaiButton.addActionListener(e -> tandaiSelesai());
         selesaiButton.setEnabled(false);
         
@@ -74,8 +128,10 @@ public class PlayAtHomeRentalPanel extends JPanel {
         selesaiButton.setToolTipText("Tandai penyewaan yang dipilih sebagai selesai");
     
         // Tombol Kembali
-        backButton = new JButton("Kembali");
-        styleButton(backButton, UIStyle.SECONDARY); // Warna abu-abu
+        backButton = new UIStyle.RoundedButton("Kembali", 8);
+        backButton.setBackground(UIStyle.SECONDARY);
+        backButton.setForeground(Color.WHITE);
+        backButton.setFont(UIStyle.fontBold(14));
         backButton.addActionListener(e -> {
             javaapplication1.MainFrame.setPage(
                 new tampilan.utama.SidebarShell(new PlayAtHomeManual()), 
@@ -94,6 +150,8 @@ public class PlayAtHomeRentalPanel extends JPanel {
                 if ("selesai".equalsIgnoreCase(status)) {
                     selesaiButton.setToolTipText("Penyewaan ini sudah selesai");
                     selesaiButton.setEnabled(false);
+                } else {
+                    selesaiButton.setToolTipText("Tandai penyewaan yang dipilih sebagai selesai");
                 }
             }
         });
@@ -101,32 +159,6 @@ public class PlayAtHomeRentalPanel extends JPanel {
         panel.add(selesaiButton);
         panel.add(backButton);
         return panel;
-    }
-    
-    // Helper method untuk styling tombol
-    private void styleButton(JButton button, Color bgColor) {
-        button.setBackground(bgColor);
-        button.setForeground(Color.WHITE);
-        button.setFocusPainted(false);
-        button.setFont(UIStyle.fontBold(14));
-        button.setBorder(BorderFactory.createCompoundBorder(
-            BorderFactory.createLineBorder(bgColor.darker(), 1),
-            BorderFactory.createEmptyBorder(8, 15, 8, 15)
-        ));
-        button.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        
-        // Efek hover
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(bgColor.brighter());
-            }
-            
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(bgColor);
-            }
-        });
     }
 
     private void loadRentalData() {
@@ -263,13 +295,24 @@ public class PlayAtHomeRentalPanel extends JPanel {
         JPanel panel = new JPanel(new BorderLayout(10, 10));
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
-        JLabel iconLabel = new JLabel(new ImageIcon("path/to/icon.png")); // Ganti dengan path ikon
+        // Create icon using UIStyle colors
+        JLabel iconLabel = new JLabel();
+        iconLabel.setPreferredSize(new Dimension(48, 48));
+        iconLabel.setOpaque(true);
+        iconLabel.setBackground(UIStyle.SUCCESS_COLOR);
+        iconLabel.setBorder(BorderFactory.createLineBorder(UIStyle.SUCCESS_COLOR.darker(), 2));
+        iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        iconLabel.setForeground(Color.WHITE);
+        iconLabel.setFont(UIStyle.fontBold(24));
+        iconLabel.setText("✓");
+        
         JLabel messageLabel = new JLabel("<html><div style='width: 300px;'>" +
             "<b>Konfirmasi Penyelesaian Penyewaan</b><br><br>" +
             "Anda akan menandai penyewaan berikut sebagai selesai:<br>" +
             "ID: " + idPlayhome + "<br>" +
             "Nama: " + namaPenyewa + "<br><br>" +
             "Apakah Anda yakin?</div></html>");
+        messageLabel.setFont(UIStyle.fontRegular(14));
         
         panel.add(iconLabel, BorderLayout.WEST);
         panel.add(messageLabel, BorderLayout.CENTER);
@@ -289,9 +332,21 @@ public class PlayAtHomeRentalPanel extends JPanel {
             progressDialog.setSize(300, 100);
             progressDialog.setLocationRelativeTo(this);
             progressDialog.setLayout(new BorderLayout());
+            progressDialog.getContentPane().setBackground(UIStyle.BACKGROUND);
+            
+            JPanel progressContent = new JPanel(new BorderLayout(10, 10));
+            progressContent.setBackground(UIStyle.BACKGROUND);
+            progressContent.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
             
             JLabel progressLabel = new JLabel("Sedang menandai penyewaan sebagai selesai...", JLabel.CENTER);
-            progressDialog.add(progressLabel, BorderLayout.CENTER);
+            progressLabel.setFont(UIStyle.fontRegular(14));
+            progressContent.add(progressLabel, BorderLayout.CENTER);
+            
+            JProgressBar progressBar = new JProgressBar();
+            progressBar.setIndeterminate(true);
+            progressContent.add(progressBar, BorderLayout.SOUTH);
+            
+            progressDialog.add(progressContent);
             progressDialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
             
             // Run in background

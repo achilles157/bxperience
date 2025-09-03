@@ -2,6 +2,7 @@ package tampilan.aset;
 
 import connection.DatabaseConnection;
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.*;
 import java.awt.*;
 import java.awt.event.*;
@@ -22,6 +23,7 @@ public class AsetManajemenPanel extends JPanel {
     private boolean isEditing = false;
     private JButton editSaveButton;
     private JButton deleteButton;
+    private JButton refreshButton;
 
     public AsetManajemenPanel() {
         setLayout(new BorderLayout(20, 20));
@@ -29,36 +31,47 @@ public class AsetManajemenPanel extends JPanel {
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
         // Title Panel
-        JPanel titlePanel = new JPanel(new BorderLayout());
-        titlePanel.setOpaque(false);
+        UIStyle.RoundedPanel titlePanel = new UIStyle.RoundedPanel(15, false);
+        titlePanel.setLayout(new BorderLayout(15, 15));
+        titlePanel.setBackground(UIStyle.CARD_BG);
+        titlePanel.setBorder(new EmptyBorder(15, 20, 15, 20));
         
         JLabel title = new JLabel("Manajemen Data Aset");
         title.setFont(UIStyle.fontBold(24));
-        title.setHorizontalAlignment(SwingConstants.CENTER);
         title.setForeground(UIStyle.PRIMARY);
         titlePanel.add(title, BorderLayout.NORTH);
 
         // Search and Filter Panel
-        JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 10));
+        JPanel searchPanel = new JPanel(new GridBagLayout());
         searchPanel.setOpaque(false);
         
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(0, 5, 0, 5);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        
         searchField = new JTextField(20);
-        searchField.setPreferredSize(new Dimension(200, 30));
-        searchField.setBorder(BorderFactory.createCompoundBorder(
-            searchField.getBorder(), 
-            BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+        searchField.setPreferredSize(new Dimension(200, 38));
+        UIStyle.styleTextField(searchField);
         
         filterCombo = new JComboBox<>(new String[]{"Semua", "PC GAMING", "RACING SIMULATOR", 
             "MOTION RACING SIMULATOR", "FLIGHT SIMULATOR", "VIP DUOS", "VIP SQUAD", 
             "PS5 OPEN SPACE", "PLAYSTATION 5", "PSVR 2", "VR OPULUS META SQUES 2", 
             "VR OPULUS META SQUES 3", "XBOX S SERIES", "NINTENDO SWITCH CADANGAN"});
+        UIStyle.styleComboBox(filterCombo);
         
-        searchPanel.add(new JLabel("Cari:"));
-        searchPanel.add(searchField);
-        searchPanel.add(new JLabel("Filter Kategori:"));
-        searchPanel.add(filterCombo);
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
+        searchPanel.add(createLabel("Cari:"), gbc);
         
-        titlePanel.add(searchPanel, BorderLayout.SOUTH);
+        gbc.gridx = 1; gbc.weightx = 0.4;
+        searchPanel.add(searchField, gbc);
+        
+        gbc.gridx = 2; gbc.weightx = 0;
+        searchPanel.add(createLabel("Filter Kategori:"), gbc);
+        
+        gbc.gridx = 3; gbc.weightx = 0.3;
+        searchPanel.add(filterCombo, gbc);
+        
+        titlePanel.add(searchPanel, BorderLayout.CENTER);
         add(titlePanel, BorderLayout.NORTH);
 
         // Table setup
@@ -82,6 +95,7 @@ public class AsetManajemenPanel extends JPanel {
         };
         
         asetTable = new JTable(model);
+        UIStyle.styleTable(asetTable);
         asetTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
         asetTable.setAutoCreateRowSorter(true);
         asetTable.getTableHeader().setReorderingAllowed(false);
@@ -120,24 +134,25 @@ public class AsetManajemenPanel extends JPanel {
 
         filterCombo.addActionListener(e -> filter());
 
-        add(new JScrollPane(asetTable), BorderLayout.CENTER);
+        JScrollPane scrollPane = new JScrollPane(asetTable);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        add(scrollPane, BorderLayout.CENTER);
 
         // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         buttonPanel.setOpaque(false);
         
-        editSaveButton = new JButton("Edit");
+        refreshButton = UIStyle.modernButton("Refresh");
+        refreshButton.setBackground(UIStyle.SECONDARY);
+        refreshButton.addActionListener(e -> refreshData());
+        
+        editSaveButton = UIStyle.modernButton("Edit");
         editSaveButton.setBackground(UIStyle.PRIMARY);
-        editSaveButton.setForeground(Color.BLACK);
         editSaveButton.addActionListener(e -> toggleEditMode());
         
-        deleteButton = new JButton("Hapus");
-        deleteButton.setBackground(Color.RED);
-        deleteButton.setForeground(Color.BLACK);
+        deleteButton = UIStyle.modernButton("Hapus");
+        deleteButton.setBackground(UIStyle.DANGER_COLOR);
         deleteButton.addActionListener(e -> deleteSelectedRows());
-        
-        JButton refreshButton = new JButton("Refresh");
-        refreshButton.addActionListener(e -> refreshData());
         
         buttonPanel.add(refreshButton);
         buttonPanel.add(editSaveButton);
@@ -146,19 +161,28 @@ public class AsetManajemenPanel extends JPanel {
 
         loadAsetData();
     }
+    
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(UIStyle.fontMedium(14));
+        label.setForeground(UIStyle.TEXT);
+        return label;
+    }
 
     private void toggleEditMode() {
         isEditing = !isEditing;
         
         if (isEditing) {
             editSaveButton.setText("Simpan");
-            editSaveButton.setBackground(new Color(0, 150, 0)); // Green for save
+            editSaveButton.setBackground(UIStyle.SUCCESS_COLOR);
             deleteButton.setEnabled(false);
+            refreshButton.setEnabled(false);
             asetTable.setRowSelectionAllowed(false); // Disable row selection during edit
         } else {
             editSaveButton.setText("Edit");
-            editSaveButton.setBackground(Color.BLACK);
+            editSaveButton.setBackground(UIStyle.PRIMARY);
             deleteButton.setEnabled(true);
+            refreshButton.setEnabled(true);
             asetTable.setRowSelectionAllowed(true);
             saveChanges();
         }

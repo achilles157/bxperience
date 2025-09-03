@@ -1,0 +1,8 @@
+{
+    "debug.javascript.resourceRequestOptions": {},
+    "java.project.referencedLibraries": [
+        "src/lib/**/*.jar",
+        "lib/jcalendar-1.4.jar",
+        "lib/mysql-connector-j-9.4.0.jar"
+    ]
+}
