@@ -181,7 +181,7 @@ public class TampilanHomeManual extends JPanel {
         statsPanel.setMaximumSize(new Dimension(800, 120));
         
         // Format angka untuk pendapatan
-        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(new Locale("id", "ID"));
+        NumberFormat currencyFormat = NumberFormat.getCurrencyInstance(Locale.forLanguageTag("id-ID"));
         
         // Stat Card 1 - Total Aset
         UIStyle.RoundedPanel statCard1 = createStatCard(
