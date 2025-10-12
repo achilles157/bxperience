@@ -263,7 +263,7 @@ public class BookingManual extends JPanel {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            UIStyle.showErrorMessage(this, "Gagal memuat data experience: " + e.getMessage());
+            UIStyle.showErrorMessage(BookingManual.this, "Gagal memuat data experience: " + e.getMessage());
         }
     }
 

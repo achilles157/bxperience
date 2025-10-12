@@ -75,7 +75,7 @@ public class AsetControl extends JPanel {
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
-                    UIStyle.showErrorMessage(AsetControl.this, "Gagal menghasilkan Kode Barang: " + ex.getMessage());
+                    UIStyle.showSuccessMessage(AsetControl.this, "Gagal menghasilkan Kode Barang: " + ex.getMessage());
                 }
 
                 kodeField.setText(prefix + String.format("%03d", nextNumber));

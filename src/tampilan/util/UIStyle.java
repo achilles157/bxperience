@@ -269,7 +269,7 @@ public class UIStyle {
         JOptionPane.showMessageDialog(parent, message, "Sukses", JOptionPane.INFORMATION_MESSAGE);
     }
 
-    public static void showErrorMessage(MonitoringPanel parent, String message) {
+    public static void showErrorMessage(Component parent, String message) {
         JOptionPane.showMessageDialog(parent, message, "Error", JOptionPane.ERROR_MESSAGE);
     }
     /**

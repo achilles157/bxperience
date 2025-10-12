@@ -39,7 +39,7 @@ public class PlayAtHomeRentalPanel extends JPanel {
         if (testDatabaseConnection()) {
             loadRentalData();
         } else {
-            UIStyle.showErrorMessage(this,
+            UIStyle.showErrorMessage(PlayAtHomeRentalPanel.this,
                 "Gagal terhubung ke database" +
                 "Error" + JOptionPane.ERROR_MESSAGE);
         }
