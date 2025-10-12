@@ -25,43 +25,54 @@ public class PlayAtHomeManual extends JPanel {
 
     public PlayAtHomeManual() {
         setLayout(new BorderLayout());
+        setBackground(UIStyle.BACKGROUND);
+        
         JScrollPane scrollPane = new JScrollPane();
-        scrollPane.setPreferredSize(new Dimension(600, 500));
+        scrollPane.setBorder(null);
+        scrollPane.getViewport().setBackground(UIStyle.BACKGROUND);
+        
         JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setBackground(UIStyle.BACKGROUND);
         scrollPane.setViewportView(contentPanel);
         add(scrollPane, BorderLayout.CENTER);
-        initComponents();
+        initComponents(contentPanel);
     }
 
-    private void initComponents() {
-        this.formWrapper = new UIStyle.RoundedPanel(20);
-        formWrapper.setLayout(new GridBagLayout());
-        formWrapper.setBackground(Color.WHITE);
-        formWrapper.setBorder(new EmptyBorder(30, 40, 30, 40));
-    
-        UIStyle.RoundedPanel headerPanel = new UIStyle.RoundedPanel(20);
-        headerPanel.setBackground(UIStyle.PRIMARY);
+    private void initComponents(JPanel contentPanel) {
+        // Header Panel
+        JPanel headerPanel = new UIStyle.RoundedPanel(20, false);
         headerPanel.setLayout(new BorderLayout());
-    
-        JPanel contentPanel = (JPanel) ((JScrollPane) getComponent(0)).getViewport().getView();
-        contentPanel.setLayout(new BorderLayout());
-        
+        headerPanel.setBackground(UIStyle.PRIMARY);
+        headerPanel.setPreferredSize(new Dimension(1024, 80));
+
         JLabel headerLabel = new JLabel("PLAY AT HOME BYEBELI", SwingConstants.CENTER);
         headerLabel.setFont(UIStyle.fontBold(28));
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setBorder(new EmptyBorder(20, 10, 20, 10));
         headerPanel.add(headerLabel, BorderLayout.CENTER);
-    
+
+        // Form Panel
+        this.formWrapper = new UIStyle.RoundedPanel(25);
+        formWrapper.setLayout(new GridBagLayout());
+        formWrapper.setBackground(UIStyle.CARD_BG);
+        formWrapper.setBorder(new EmptyBorder(30, 40, 30, 40));
+
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.anchor = GridBagConstraints.WEST;
         gbc.weightx = 1.0;
-    
+
+        // Form fields
         JTextField lokasiField = new JTextField();
+        UIStyle.styleTextField(lokasiField);
+        
         JTextField namaField = new JTextField();
+        UIStyle.styleTextField(namaField);
+        
         JTextField instagramField = new JTextField();
-    
+        UIStyle.styleTextField(instagramField);
+
         this.itemModel = new DefaultTableModel(new String[]{"Barang", "Jumlah", "Harga Per Hari", "Subtotal"}, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -72,28 +83,66 @@ public class PlayAtHomeManual extends JPanel {
                 return column == 1 ? Integer.class : String.class;
             }
         };
+        
         JTable itemTable = new JTable(this.itemModel);
-    
+        UIStyle.styleTable(itemTable);
+        
         this.itemScroll = new JScrollPane(itemTable);
         itemScroll.setPreferredSize(new Dimension(400, 150));
-    
+        itemScroll.setBorder(BorderFactory.createCompoundBorder(
+            new javax.swing.border.LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(5, 5, 5, 5)
+        ));
+
         this.kategoriCombo = new JComboBox<>();
+        UIStyle.styleComboBox(kategoriCombo);
+        
         this.itemCombo = new JComboBox<>();
+        UIStyle.styleComboBox(itemCombo);
         
         this.countLabel = new JLabel();
+        countLabel.setFont(UIStyle.fontRegular(14));
+        countLabel.setForeground(UIStyle.TEXT_LIGHT);
+        
         JTextField jumlahField = new JTextField(5);
-        JButton tambahItemButton = new JButton("Tambah Barang");
+        UIStyle.styleTextField(jumlahField);
+        
+        JButton tambahItemButton = new UIStyle.RoundedButton("Tambah Barang", 8);
+        tambahItemButton.setBackground(UIStyle.PRIMARY);
+        tambahItemButton.setForeground(Color.WHITE);
+        
         this.dariDate = new JDateChooser();
+        dariDate.setFont(UIStyle.fontRegular(14));
+        dariDate.setPreferredSize(new Dimension(200, 40));
+        dariDate.setBackground(Color.WHITE);
+        
         this.sampaiDate = new JDateChooser();
+        sampaiDate.setFont(UIStyle.fontRegular(14));
+        sampaiDate.setPreferredSize(new Dimension(200, 40));
+        sampaiDate.setBackground(Color.WHITE);
 
         JComboBox<String> metodeCombo = new JComboBox<>(new String[]{"Pick Up", "Delivery"});
+        UIStyle.styleComboBox(metodeCombo);
+        
         JTextField alamatAntarField = new JTextField();
+        UIStyle.styleTextField(alamatAntarField);
+        
         JTextField alamatKembaliField = new JTextField();
+        UIStyle.styleTextField(alamatKembaliField);
+        
         JTextField keperluanField = new JTextField();
+        UIStyle.styleTextField(keperluanField);
 
         this.hargaField = new JTextField();
+        UIStyle.styleTextField(hargaField);
+        hargaField.setEditable(false);
+        
         this.ongkirField = new JTextField();
+        UIStyle.styleTextField(ongkirField);
+        
         this.totalField = new JTextField();
+        UIStyle.styleTextField(totalField);
+        totalField.setEditable(false);
         
         // Set date change listeners
         dariDate.addPropertyChangeListener("date", e -> calculateTotalPrice());
@@ -103,22 +152,51 @@ public class PlayAtHomeManual extends JPanel {
             public void insertUpdate(javax.swing.event.DocumentEvent e) { calculateTotalPrice(); }
             public void removeUpdate(javax.swing.event.DocumentEvent e) { calculateTotalPrice(); }
         });
-    
+
         int row = 0;
+        
+        // Section titles
+        JLabel infoLabel = new JLabel("Informasi Penyewa");
+        infoLabel.setFont(UIStyle.fontBold(18));
+        infoLabel.setForeground(UIStyle.PRIMARY);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formWrapper.add(infoLabel, gbc);
+        gbc.gridwidth = 1;
+        
         addField(formWrapper, gbc, row++, "Lokasi:", lokasiField);
         addField(formWrapper, gbc, row++, "Nama Penyewa:", namaField);
         addField(formWrapper, gbc, row++, "Akun Instagram:", instagramField);
+        
+        // Items section
+        JLabel itemsLabel = new JLabel("Pilihan Barang");
+        itemsLabel.setFont(UIStyle.fontBold(18));
+        itemsLabel.setForeground(UIStyle.PRIMARY);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formWrapper.add(itemsLabel, gbc);
+        gbc.gridwidth = 1;
+        
         addField(formWrapper, gbc, row++, "Pilih Kategori:", kategoriCombo);
+        
         JPanel itemPanel = new JPanel(new BorderLayout(5, 0));
+        itemPanel.setBackground(UIStyle.CARD_BG);
         itemPanel.add(itemCombo, BorderLayout.CENTER);
         itemPanel.add(countLabel, BorderLayout.EAST);
         addField(formWrapper, gbc, row++, "Pilih Barang:", itemPanel);
     
         addField(formWrapper, gbc, row++, "Jumlah:", jumlahField);
-        gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = row++;
+        
+        gbc.gridwidth = 2; 
+        gbc.gridx = 0; 
+        gbc.gridy = row++;
         formWrapper.add(tambahItemButton, gbc);
 
-        JButton hapusItemButton = new JButton("Hapus Barang");
+        JButton hapusItemButton = new UIStyle.RoundedButton("Hapus Barang", 8);
+        hapusItemButton.setBackground(UIStyle.DANGER_COLOR);
+        hapusItemButton.setForeground(Color.WHITE);
         hapusItemButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 int selectedRow = itemTable.getSelectedRow();
@@ -153,44 +231,68 @@ public class PlayAtHomeManual extends JPanel {
         gbc.gridy = row++;
         formWrapper.add(hapusItemButton, gbc);
 
-        gbc.gridwidth = 2; gbc.gridx = 0; gbc.gridy = row++;
+        gbc.gridwidth = 2; 
+        gbc.gridx = 0; 
+        gbc.gridy = row++;
         formWrapper.add(this.itemScroll, gbc);
+        
+        // Rental details section
+        JLabel rentalLabel = new JLabel("Detail Penyewaan");
+        rentalLabel.setFont(UIStyle.fontBold(18));
+        rentalLabel.setForeground(UIStyle.PRIMARY);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formWrapper.add(rentalLabel, gbc);
+        gbc.gridwidth = 1;
+        
         addField(formWrapper, gbc, row++, "Tanggal Mulai:", dariDate);
         addField(formWrapper, gbc, row++, "Tanggal Selesai:", sampaiDate);
         addField(formWrapper, gbc, row++, "Metode Pengambilan:", metodeCombo);
         addField(formWrapper, gbc, row++, "Alamat Antar:", alamatAntarField);
         addField(formWrapper, gbc, row++, "Alamat Kembali:", alamatKembaliField);
         addField(formWrapper, gbc, row++, "Keperluan:", keperluanField);
+        
+        // Pricing section
+        JLabel priceLabel = new JLabel("Informasi Pembayaran");
+        priceLabel.setFont(UIStyle.fontBold(18));
+        priceLabel.setForeground(UIStyle.PRIMARY);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formWrapper.add(priceLabel, gbc);
+        gbc.gridwidth = 1;
+        
         addField(formWrapper, gbc, row++, "Harga Sewa:", hargaField);
         addField(formWrapper, gbc, row++, "Ongkir:", ongkirField);
         addField(formWrapper, gbc, row++, "Total:", totalField);
     
-        JButton submitButton = new JButton("Simpan");
-        submitButton.setBackground(UIStyle.PRIMARY);
-        submitButton.setForeground(Color.BLACK);
+        JButton submitButton = new UIStyle.RoundedButton("Simpan", 8);
+        submitButton.setBackground(UIStyle.SUCCESS_COLOR);
+        submitButton.setForeground(Color.WHITE);
+        submitButton.setFont(UIStyle.fontBold(16));
+        submitButton.setPreferredSize(new Dimension(200, 45));
+        
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = row++;
+        gbc.anchor = GridBagConstraints.CENTER;
         formWrapper.add(submitButton, gbc);
 
-        JButton viewRentalsButton = new JButton("Lihat Penyewaan Aktif");
+        JButton viewRentalsButton = new UIStyle.RoundedButton("Lihat Penyewaan Aktif", 8);
         viewRentalsButton.setBackground(UIStyle.PRIMARY);
-        viewRentalsButton.setForeground(Color.BLACK);
+        viewRentalsButton.setForeground(Color.WHITE);
         viewRentalsButton.addActionListener(e -> {
-        javaapplication1.MainFrame.setPage(
-            new tampilan.utama.SidebarShell(new PlayAtHomeRentalPanel()), 
-            "playathome-rentals"
-        );
-    });
+            javaapplication1.MainFrame.setPage(
+                new tampilan.utama.SidebarShell(new PlayAtHomeRentalPanel()), 
+                "playathome-rentals"
+            );
+        });
     
-    gbc.gridx = 0;
-    gbc.gridy = row++;
-    formWrapper.add(viewRentalsButton, gbc);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        formWrapper.add(viewRentalsButton, gbc);
 
-    contentPanel.add(headerPanel, BorderLayout.NORTH);
-    contentPanel.add(formWrapper, BorderLayout.CENTER);
-
-    
         contentPanel.add(headerPanel, BorderLayout.NORTH);
         contentPanel.add(formWrapper, BorderLayout.CENTER);
     
@@ -279,7 +381,6 @@ public class PlayAtHomeManual extends JPanel {
                 updateTableVisibility();
             }
         });
-
 
         submitButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -478,9 +579,13 @@ public class PlayAtHomeManual extends JPanel {
     }
 
     private void addField(JPanel panel, GridBagConstraints gbc, int row, String labelText, Component field) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(UIStyle.fontMedium(16));
+        label.setForeground(UIStyle.TEXT);
+        
         gbc.gridx = 0;
         gbc.gridy = row;
-        panel.add(new JLabel(labelText), gbc);
+        panel.add(label, gbc);
         gbc.gridx = 1;
         panel.add(field, gbc);
     }

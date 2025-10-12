@@ -229,3 +229,21 @@ COMMIT;
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+
+-- Tambah kolom created_at pada tabel aset untuk mengetahui kapan aset ditambahkan
+ALTER TABLE aset ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- Tambah kolom created_at pada tabel booking untuk mengetahui kapan booking dibuat
+ALTER TABLE booking ADD COLUMN created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
+
+-- Tambah kolom status pada tabel booking untuk mengetahui status booking
+ALTER TABLE booking ADD COLUMN status ENUM('pending', 'confirmed', 'completed', 'cancelled') DEFAULT 'pending';
+
+-- Buat tabel untuk menyimpan pendapatan harian (jika diperlukan untuk tracking lebih detail)
+CREATE TABLE daily_revenue (
+    id INT PRIMARY KEY AUTO_INCREMENT,
+    date DATE NOT NULL,
+    total_revenue DECIMAL(15,2) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY unique_date (date)
+);

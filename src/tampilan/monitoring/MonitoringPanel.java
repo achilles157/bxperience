@@ -1,6 +1,7 @@
 package tampilan.monitoring;
 
 import javax.swing.*;
+import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -23,29 +24,73 @@ public class MonitoringPanel extends JPanel {
         setBackground(UIStyle.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        add(createSummaryPanel(), BorderLayout.NORTH);
-        add(createTablePanel(), BorderLayout.CENTER);
+        // Header Panel
+        JPanel headerPanel = new UIStyle.RoundedPanel(20, false);
+        headerPanel.setLayout(new BorderLayout());
+        headerPanel.setBackground(UIStyle.PRIMARY);
+        headerPanel.setPreferredSize(new Dimension(1024, 80));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 30));
+
+        JLabel titleLabel = new JLabel("MONITORING PENYEWAAN", SwingConstants.CENTER);
+        titleLabel.setFont(UIStyle.fontBold(24));
+        titleLabel.setForeground(Color.WHITE);
+        headerPanel.add(titleLabel, BorderLayout.CENTER);
+        
+        // Panel utama dengan scroll
+        JPanel mainPanel = new JPanel();
+        mainPanel.setLayout(new BoxLayout(mainPanel, BoxLayout.Y_AXIS));
+        mainPanel.setBackground(UIStyle.BACKGROUND);
+        mainPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        
+        mainPanel.add(createSummaryPanel());
+        mainPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+        mainPanel.add(createTablePanel());
+        
+        JScrollPane scrollPane = new JScrollPane(mainPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(UIStyle.BACKGROUND);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        add(headerPanel, BorderLayout.NORTH);
+        add(scrollPane, BorderLayout.CENTER);
 
         loadSummaryData();
         loadBookingData();
     }
 
     private JPanel createSummaryPanel() {
-        JPanel panel = new JPanel(new GridLayout(1, 3, 20, 0));
+        JPanel panel = new JPanel();
+        panel.setLayout(new BoxLayout(panel, BoxLayout.X_AXIS));
         panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
+        
+        // Inisialisasi label dengan teks default
+        totalTersediaLabel = new JLabel("<html><div style='text-align:center'>Tersedia<br><span style='font-size:24px'>0</span></div></html>", SwingConstants.CENTER);
+        totalDisewaLabel = new JLabel("<html><div style='text-align:center'>Disewa<br><span style='font-size:24px'>0</span></div></html>", SwingConstants.CENTER);
+        totalBookingLabel = new JLabel("<html><div style='text-align:center'>Booking<br><span style='font-size:24px'>0</span></div></html>", SwingConstants.CENTER);
 
-        totalTersediaLabel = new JLabel("Tersedia: 0");
-        totalDisewaLabel = new JLabel("Disewa: 0");
-        totalBookingLabel = new JLabel("Booking: 0");
+        JLabel[] labels = {totalTersediaLabel, totalDisewaLabel, totalBookingLabel};
+        Color[] colors = {UIStyle.SUCCESS_COLOR, UIStyle.WARNING_COLOR, UIStyle.PRIMARY};
 
-        for (JLabel label : new JLabel[]{totalTersediaLabel, totalDisewaLabel, totalBookingLabel}) {
+        for (int i = 0; i < labels.length; i++) {
+            JLabel label = labels[i];
             label.setFont(UIStyle.fontBold(16));
-            label.setHorizontalAlignment(SwingConstants.CENTER);
-            JPanel card = new UIStyle.RoundedPanel(20);
-            card.setBackground(Color.WHITE);
+            label.setForeground(Color.WHITE);
+            label.setOpaque(false);
+
+            // Panel untuk kartu menggunakan RoundedPanel dari UIStyle
+            UIStyle.RoundedPanel card = new UIStyle.RoundedPanel(15, true);
             card.setLayout(new BorderLayout());
+            card.setBackground(colors[i]);
+            card.setBorder(BorderFactory.createEmptyBorder(20, 15, 20, 15));
+            card.setPreferredSize(new Dimension(200, 100));
+            card.setMaximumSize(new Dimension(300, 120));
             card.add(label, BorderLayout.CENTER);
+            
             panel.add(card);
+            if (i < labels.length - 1) {
+                panel.add(Box.createRigidArea(new Dimension(15, 0)));
+            }
         }
 
         return panel;
@@ -59,14 +104,36 @@ public class MonitoringPanel extends JPanel {
             public boolean isCellEditable(int row, int column) {
                 return column == 7; // Hanya kolom aksi yang bisa di-edit
             }
+            
+            @Override
+            public Class<?> getColumnClass(int column) {
+                return column == 7 ? JButton.class : Object.class;
+            }
         };
 
         table = new JTable(tableModel);
+        UIStyle.styleTable(table);
         table.getColumn("Aksi").setCellRenderer(new ButtonRenderer());
         table.getColumn("Aksi").setCellEditor(new ButtonEditor(new JCheckBox()));
-        table.setRowHeight(40);
+        table.setRowHeight(45);
+        
+        // Set column widths
+        table.getColumnModel().getColumn(0).setPreferredWidth(100);
+        table.getColumnModel().getColumn(1).setPreferredWidth(150);
+        table.getColumnModel().getColumn(2).setPreferredWidth(200);
+        table.getColumnModel().getColumn(3).setPreferredWidth(100);
+        table.getColumnModel().getColumn(4).setPreferredWidth(80);
+        table.getColumnModel().getColumn(5).setPreferredWidth(80);
+        table.getColumnModel().getColumn(6).setPreferredWidth(80);
+        table.getColumnModel().getColumn(7).setPreferredWidth(100);
 
-        return new JScrollPane(table);
+        JScrollPane scrollPane = new JScrollPane(table);
+        scrollPane.setBorder(BorderFactory.createCompoundBorder(
+            new javax.swing.border.LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(5, 5, 5, 5)
+        ));
+        
+        return scrollPane;
     }
 
     private void loadSummaryData() {
@@ -76,27 +143,29 @@ public class MonitoringPanel extends JPanel {
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(tersediaQuery)) {
                 if (rs.next()) {
-                    totalTersediaLabel.setText("Tersedia: " + rs.getInt(1));
+                    totalTersediaLabel.setText("<html><div style='text-align:center'>Tersedia<br><span style='font-size:24px'>" + rs.getInt(1) + "</span></div></html>");
                 }
             }
 
-            // Hitung item disewa (playathome)
-            String disewaQuery = "SELECT COUNT(*) FROM playathome_detail pd " +
+            // Hitung item disewa (playathome) - hanya yang status aktif
+            String disewaQuery = "SELECT COUNT(DISTINCT pd.id_aset) FROM playathome_detail pd " +
                                "JOIN playathome p ON pd.id_playhome = p.id_playhome " +
                                "WHERE p.status = 'aktif'";
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(disewaQuery)) {
                 if (rs.next()) {
-                    totalDisewaLabel.setText("Disewa: " + rs.getInt(1));
+                    totalDisewaLabel.setText("<html><div style='text-align:center'>Disewa<br><span style='font-size:24px'>" + rs.getInt(1) + "</span></div></html>");
                 }
             }
 
-            // Hitung item booking
-            String bookingQuery = "SELECT COUNT(*) FROM booking_detail";
+            // Hitung item booking - hanya yang status bukan completed/cancelled
+            String bookingQuery = "SELECT COUNT(DISTINCT bd.id_aset) FROM booking_detail bd " +
+                                "JOIN booking b ON bd.id_booking = b.id_booking " +
+                                "WHERE b.status IS NULL OR b.status NOT IN ('completed', 'cancelled')";
             try (Statement stmt = conn.createStatement();
                  ResultSet rs = stmt.executeQuery(bookingQuery)) {
                 if (rs.next()) {
-                    totalBookingLabel.setText("Booking: " + rs.getInt(1));
+                    totalBookingLabel.setText("<html><div style='text-align:center'>Booking<br><span style='font-size:24px'>" + rs.getInt(1) + "</span></div></html>");
                 }
             }
 
@@ -107,64 +176,65 @@ public class MonitoringPanel extends JPanel {
         }
     }
 
-    private void loadBookingData() {
-        tableModel.setRowCount(0); // Clear existing data
+   private void loadBookingData() {
+    tableModel.setRowCount(0); // Clear existing data
+    
+    // Query untuk data booking (hanya yang belum selesai)
+    String bookingQuery = "SELECT b.id_booking as id, b.nama, " +
+             "GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, " +
+             "b.tanggal, b.jam, b.durasi_menit, " +
+             "'Booking' as jenis, " +
+             "COALESCE(b.status, 'Booking') as status " +
+             "FROM booking b " +
+             "JOIN booking_detail bd ON b.id_booking = bd.id_booking " +
+             "LEFT JOIN aset a ON bd.id_aset = a.id_aset " +
+             "WHERE (b.status IS NULL OR b.status NOT IN ('completed', 'cancelled')) " +
+             "AND b.tanggal >= CURDATE() " +
+             "GROUP BY b.id_booking ";
+    
+    // Query untuk data playathome (hanya yang aktif)
+    String playhomeQuery = "SELECT p.id_playhome as id, p.nama, " +
+             "GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, " +
+             "p.tgl_mulai as tanggal, NULL as jam, " +
+             "DATEDIFF(p.tgl_selesai, p.tgl_mulai) as durasi_menit, " +
+             "'PlayAtHome' as jenis, " +
+             "'Disewa' as status " +
+             "FROM playathome p " +
+             "JOIN playathome_detail pd ON p.id_playhome = pd.id_playhome " +
+             "LEFT JOIN aset a ON pd.id_aset = a.id_aset " +
+             "WHERE p.status = 'aktif' " +
+             "GROUP BY p.id_playhome ";
+    
+    // Gabungkan kedua query dengan UNION
+    String fullQuery = "(" + bookingQuery + ") UNION (" + playhomeQuery + ") " +
+                     "ORDER BY tanggal DESC, jam DESC";
+    
+    try (Connection conn = DatabaseConnection.getConnection();
+         Statement stmt = conn.createStatement();
+         ResultSet rs = stmt.executeQuery(fullQuery)) {
         
-        // Query untuk data booking (hanya yang belum selesai)
-        String bookingQuery = "SELECT b.id_booking as id, b.nama, " +
-                 "GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, " +
-                 "b.tanggal, b.jam, b.durasi_menit, " +
-                 "'Booking' as jenis, " +
-                 "CASE WHEN b.tanggal >= CURDATE() THEN 'Booking' ELSE 'Selesai' END as status " +
-                 "FROM booking b " +
-                 "JOIN booking_detail bd ON b.id_booking = bd.id_booking " +
-                 "LEFT JOIN aset a ON bd.id_aset = a.id_aset " +
-                 "WHERE b.tanggal >= CURDATE() " + // Hanya booking yang belum lewat tanggal
-                 "GROUP BY b.id_booking ";
-        
-        // Query untuk data playathome (hanya yang aktif)
-        String playhomeQuery = "SELECT p.id_playhome as id, p.nama, " +
-                 "GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, " +
-                 "p.tgl_mulai as tanggal, NULL as jam, " +
-                 "DATEDIFF(p.tgl_selesai, p.tgl_mulai) as durasi_menit, " +
-                 "'PlayAtHome' as jenis, " +
-                 "'Disewa' as status " + // Status selalu Disewa karena kita hanya query yang aktif
-                 "FROM playathome p " +
-                 "JOIN playathome_detail pd ON p.id_playhome = pd.id_playhome " +
-                 "LEFT JOIN aset a ON pd.id_aset = a.id_aset " +
-                 "WHERE p.status = 'aktif' " + // Hanya yang status aktif
-                 "GROUP BY p.id_playhome ";
-        
-        // Gabungkan kedua query dengan UNION
-        String fullQuery = "(" + bookingQuery + ") UNION (" + playhomeQuery + ") " +
-                         "ORDER BY tanggal DESC, jam DESC";
-        
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(fullQuery)) {
-            
-            while (rs.next()) {
-                Object[] row = {
-                    rs.getString("jenis") + "-" + rs.getInt("id"),
-                    rs.getString("nama"),
-                    rs.getString("items"),
-                    rs.getDate("tanggal"),
-                    rs.getTime("jam"),
-                    rs.getString("jenis").equals("Booking") ? 
-                        rs.getInt("durasi_menit") + " menit" : 
-                        rs.getInt("durasi_menit") + " hari",
-                    rs.getString("status"),
-                    rs.getString("status").equals("Disewa") ? "Aktif" : "Kembalikan"
-                };
-                tableModel.addRow(row);
-            }
-            
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal memuat data: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+        while (rs.next()) {
+            Object[] row = {
+                rs.getString("jenis") + "-" + rs.getInt("id"),
+                rs.getString("nama"),
+                rs.getString("items"),
+                rs.getDate("tanggal"),
+                rs.getTime("jam"),
+                rs.getString("jenis").equals("Booking") ? 
+                    rs.getInt("durasi_menit") + " menit" : 
+                    rs.getInt("durasi_menit") + " hari",
+                rs.getString("status"),
+                rs.getString("status").equals("Disewa") ? "Aktif" : "Kembalikan"
+            };
+            tableModel.addRow(row);
         }
+        
+    } catch (SQLException e) {
+        e.printStackTrace();
+        JOptionPane.showMessageDialog(this, "Gagal memuat data: " + e.getMessage(), 
+            "Error", JOptionPane.ERROR_MESSAGE);
     }
+}
     
     private void kembalikanItem(String idTransaksi) {
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -247,13 +317,24 @@ public class MonitoringPanel extends JPanel {
         public ButtonRenderer() {
             setOpaque(true);
             setBackground(UIStyle.SUCCESS_COLOR);
-            setForeground(UIStyle.PRIMARY);
+            setForeground(Color.WHITE);
             setFont(UIStyle.fontBold(12));
+            setBorder(BorderFactory.createEmptyBorder(8, 12, 8, 12));
+            setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
         }
 
         public Component getTableCellRendererComponent(JTable table, Object value,
                                                      boolean isSelected, boolean hasFocus, int row, int column) {
             setText((value == null) ? "Kembalikan" : value.toString());
+            
+            // Custom color based on status
+            String status = tableModel.getValueAt(row, 6).toString();
+            if ("Aktif".equals(status)) {
+                setBackground(UIStyle.WARNING_COLOR);
+            } else {
+                setBackground(UIStyle.SUCCESS_COLOR);
+            }
+            
             return this;
         }
     }
@@ -266,8 +347,7 @@ public class MonitoringPanel extends JPanel {
 
         public ButtonEditor(JCheckBox checkBox) {
             super(checkBox);
-            button = new JButton();
-            button.setOpaque(true);
+            button = new UIStyle.RoundedButton("Kembalikan", 6);
             button.setBackground(UIStyle.SUCCESS_COLOR);
             button.setForeground(Color.WHITE);
             button.setFont(UIStyle.fontBold(12));
@@ -282,6 +362,15 @@ public class MonitoringPanel extends JPanel {
                                                    boolean isSelected, int row, int column) {
             label = (value == null) ? "Kembalikan" : value.toString();
             button.setText(label);
+            
+            // Custom color based on status
+            String status = tableModel.getValueAt(row, 6).toString();
+            if ("Aktif".equals(status)) {
+                button.setBackground(UIStyle.WARNING_COLOR);
+            } else {
+                button.setBackground(UIStyle.SUCCESS_COLOR);
+            }
+            
             this.row = row;
             clicked = true;
             return button;
@@ -294,14 +383,42 @@ public class MonitoringPanel extends JPanel {
                 String nama = tableModel.getValueAt(row, 1).toString();
                 String items = tableModel.getValueAt(row, 2).toString();
                 
-                int confirm = JOptionPane.showConfirmDialog(
+                // Create custom confirmation dialog
+                JPanel panel = new JPanel(new BorderLayout(10, 10));
+                panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+                
+                // Create icon
+                JLabel iconLabel = new JLabel();
+                iconLabel.setPreferredSize(new Dimension(48, 48));
+                iconLabel.setOpaque(true);
+                iconLabel.setBackground(UIStyle.WARNING_COLOR);
+                iconLabel.setBorder(BorderFactory.createLineBorder(UIStyle.WARNING_COLOR.darker(), 2));
+                iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
+                iconLabel.setForeground(Color.WHITE);
+                iconLabel.setFont(UIStyle.fontBold(24));
+                iconLabel.setText("!");
+                
+                JLabel messageLabel = new JLabel("<html><div style='width: 300px;'>" +
+                    "<b>Konfirmasi Pengembalian</b><br><br>" +
+                    "Anda akan mengembalikan transaksi berikut:<br>" +
+                    "ID: " + transactionId + "<br>" +
+                    "Nama: " + nama + "<br>" +
+                    "Items: " + items + "<br><br>" +
+                    "Apakah Anda yakin?</div></html>");
+                messageLabel.setFont(UIStyle.fontRegular(14));
+                
+                panel.add(iconLabel, BorderLayout.WEST);
+                panel.add(messageLabel, BorderLayout.CENTER);
+                
+                int confirm = JOptionPane.showOptionDialog(
                     button, 
-                    "Apakah Anda yakin ingin mengembalikan transaksi untuk:\n" +
-                    "ID: " + transactionId + "\n" +
-                    "Nama: " + nama + "\n" +
-                    "Items: " + items,
+                    panel,
                     "Konfirmasi Pengembalian",
-                    JOptionPane.YES_NO_OPTION);
+                    JOptionPane.YES_NO_OPTION,
+                    JOptionPane.QUESTION_MESSAGE,
+                    null,
+                    new Object[]{"Ya, Kembalikan", "Batal"},
+                    "Batal");
                 
                 if (confirm == JOptionPane.YES_OPTION) {
                     kembalikanItem(transactionId);

@@ -1,78 +1,147 @@
-
 package tampilan.util;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.table.DefaultTableCellRenderer;
 
 public class UIStyle {
 
-    // Palet warna refined
-    public static final Color PRIMARY = Color.decode("#3674B5");       // Biru tua profesional
-    public static final Color PRIMARY_LIGHT = Color.decode("#5B9DDC"); // Biru terang untuk hover
-    public static final Color ACCENT = Color.decode("#A1E3F9");        // Aksen lembut
-    public static final Color SECONDARY = new Color(108, 117, 125);
-    public static final Color SUCCESS_COLOR = new Color(40, 167, 69);
-    public static final Color WARNING_COLOR = new Color(255, 193, 7);
-    public static final Color DANGER_COLOR = new Color(220, 53, 69);
-    public static final Color BACKGROUND = new Color(248, 249, 250);
-// Abu muda netral
-    public static final Color TEXT = Color.decode("#222222");
+    // Palet warna modern dan trendy
+    public static final Color PRIMARY = Color.decode("#4A6FFF");       // Biru cerah modern
+    public static final Color PRIMARY_LIGHT = Color.decode("#6B8CFF"); // Biru terang untuk hover
+    public static final Color PRIMARY_DARK = Color.decode("#3A5DE8");  // Biru gelap untuk aksen
+    public static final Color ACCENT = Color.decode("#FF6B9D");        // Pink cerah untuk aksen
+    public static final Color SECONDARY = Color.decode("#8A8D93");     // Abu-abu netral
+    public static final Color SUCCESS_COLOR = Color.decode("#47D764"); // Hijau terang modern
+    public static final Color WARNING_COLOR = Color.decode("#FFC107"); // Kuning
+    public static final Color DANGER_COLOR = Color.decode("#FF4757");  // Merah modern
+    public static final Color BACKGROUND = Color.decode("#F5F7FF");    // Biru sangat muda
+    public static final Color CARD_BG = Color.WHITE;                   // Putih untuk kartu
+    public static final Color TEXT = Color.decode("#2D3748");          // Abu-abu gelap untuk teks
+    public static final Color TEXT_LIGHT = Color.decode("#718096");    // Abu-abu medium untuk teks sekunder
 
     // Font
     public static Font fontRegular(int size) {
         return new Font("Segoe UI", Font.PLAIN, size);
     }
 
+    public static Font fontMedium(int size) {
+        return new Font("Segoe UI", Font.PLAIN, size); // Medium weight akan diatur dengan turunan
+    }
+
     public static Font fontBold(int size) {
         return new Font("Segoe UI", Font.BOLD, size);
     }
 
-    // Panel bundar dengan outline & shadow halus
+    // Panel bundar dengan shadow modern
     public static class RoundedPanel extends JPanel {
         private final int cornerRadius;
+        private boolean shadow = true;
 
         public RoundedPanel(int radius) {
+            this(radius, true);
+        }
+        
+        public RoundedPanel(int radius, boolean shadow) {
             super();
             this.cornerRadius = radius;
+            this.shadow = shadow;
             setOpaque(false);
-            setBorder(new LineBorder(new Color(0, 0, 0, 30), 1)); // outline lembut
+            setBorder(new EmptyBorder(5, 5, 5, 5));
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            Dimension arcs = new Dimension(cornerRadius, cornerRadius);
-            int width = getWidth();
-            int height = getHeight();
             Graphics2D g2 = (Graphics2D) g;
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Efek shadow
+            if (shadow) {
+                g2.setColor(new Color(0, 0, 0, 15));
+                g2.fillRoundRect(3, 3, getWidth()-6, getHeight()-6, cornerRadius, cornerRadius);
+            }
+            
+            // Panel utama
             g2.setColor(getBackground());
-            g2.fillRoundRect(0, 0, width - 1, height - 1, arcs.width, arcs.height);
-
-            // Efek shadow dalam
-            g2.setColor(new Color(0, 0, 0, 50));
-            g2.drawRoundRect(1, 1, width - 3, height - 3, arcs.width, arcs.height);
+            g2.fillRoundRect(0, 0, getWidth()-1, getHeight()-1, cornerRadius, cornerRadius);
+            
+            // Border halus
+            g2.setColor(new Color(0, 0, 0, 10));
+            g2.drawRoundRect(0, 0, getWidth()-1, getHeight()-1, cornerRadius, cornerRadius);
         }
     }
 
-    
-    
+    // Label dengan efek hover modern
     public static class HoverLabel extends JLabel {
-        private Color defaultBackground = UIStyle.PRIMARY; // hitam
+        private Color defaultBackground = UIStyle.PRIMARY;
         private Color hoverBackground = UIStyle.PRIMARY_LIGHT;
         private Color defaultForeground = Color.WHITE;
+        private int borderRadius = 8;
 
         public HoverLabel(String text) {
             super(text);
-            setOpaque(true);
-            setBackground(defaultBackground);
+            setOpaque(false);
             setForeground(defaultForeground);
             setHorizontalAlignment(SwingConstants.CENTER);
             setCursor(new Cursor(Cursor.HAND_CURSOR));
+            setBorder(new EmptyBorder(10, 15, 10, 15));
+            setFont(fontMedium(14));
 
+            addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseEntered(MouseEvent e) {
+                    setBackground(hoverBackground);
+                    repaint();
+                }
+
+                @Override
+                public void mouseExited(MouseEvent e) {
+                    setBackground(defaultBackground);
+                    repaint();
+                }
+            });
+        }
+        
+        @Override
+        protected void paintComponent(Graphics g) {
+            Graphics2D g2 = (Graphics2D) g.create();
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            
+            // Background dengan rounded corners
+            g2.setColor(getBackground());
+            g2.fillRoundRect(0, 0, getWidth(), getHeight(), borderRadius, borderRadius);
+            
+            super.paintComponent(g2);
+            g2.dispose();
+        }
+        
+        public void setBackground(Color bg) {
+            super.setBackground(bg);
+            defaultBackground = bg;
+        }
+    }
+
+    // Tombol dengan desain modern
+    public static class RoundedButton extends JButton {
+        private final int radius;
+        private Color hoverBackground = PRIMARY_LIGHT;
+
+        public RoundedButton(String text, int radius) {
+            super(text);
+            this.radius = radius;
+            setContentAreaFilled(false);
+            setFocusPainted(false);
+            setBackground(PRIMARY);
+            setForeground(Color.WHITE);
+            setFont(fontMedium(14));
+            setBorder(new EmptyBorder(12, 20, 12, 20));
+            setCursor(new Cursor(Cursor.HAND_CURSOR));
+            
             addMouseListener(new MouseAdapter() {
                 @Override
                 public void mouseEntered(MouseEvent e) {
@@ -81,63 +150,108 @@ public class UIStyle {
 
                 @Override
                 public void mouseExited(MouseEvent e) {
-                    setBackground(defaultBackground);
+                    setBackground(PRIMARY);
                 }
             });
-        }
-    }
-
-     public static class RoundedButton extends JButton {
-        private final int radius;
-
-        public RoundedButton(String text, int radius) {
-            super(text);
-            this.radius = radius;
-            setContentAreaFilled(false);
-            setFocusPainted(false);
-            setBackground(PRIMARY);
-            setForeground(Color.BLACK);
-            setFont(fontBold(14));
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             Graphics2D g2 = (Graphics2D) g.create();
             g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setColor(getBackground());
+            
+            // Background
+            if (getModel().isPressed()) {
+                g2.setColor(PRIMARY_DARK);
+            } else if (getModel().isRollover()) {
+                g2.setColor(hoverBackground);
+            } else {
+                g2.setColor(getBackground());
+            }
             g2.fillRoundRect(0, 0, getWidth(), getHeight(), radius, radius);
-            super.paintComponent(g);
+            
+            super.paintComponent(g2);
             g2.dispose();
         }
 
         @Override
         protected void paintBorder(Graphics g) {
-            g.setColor(new Color(0, 0, 0, 30));
-            g.drawRoundRect(0, 0, getWidth() - 1, getHeight() - 1, radius, radius);
+            // Tidak menggambar border default
         }
     }
     
+    // Metode untuk membuat tombol modern
     public static JButton modernButton(String text) {
-        JButton button = new JButton(text);
-        button.setFocusPainted(false);
-        button.setFont(fontBold(14));
+        JButton button = new RoundedButton(text, 8);
         button.setBackground(PRIMARY);
         button.setForeground(Color.WHITE);
-        button.setOpaque(true);
-        button.setBorderPainted(false);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-
-        button.addMouseListener(new MouseAdapter() {
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(PRIMARY_LIGHT);
-            }
-
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(PRIMARY);
+        button.setFont(fontMedium(14));
+        return button;
+    }
+    
+    // Style untuk text field modern
+    public static void styleTextField(JTextField field) {
+        field.setFont(fontRegular(14));
+        field.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(10, 12, 10, 12)
+        ));
+        field.setBackground(Color.WHITE);
+    }
+    
+    // Style untuk combo box modern
+    public static void styleComboBox(JComboBox<?> combo) {
+        combo.setFont(fontRegular(14));
+        combo.setBackground(Color.WHITE);
+        combo.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(8, 12, 8, 12)
+        ));
+        combo.setRenderer(new DefaultListCellRenderer() {
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setBorder(new EmptyBorder(5, 10, 5, 10));
+                return label;
             }
         });
-
-        return button;
+    }
+    
+    // Style untuk text area modern
+    public static void styleTextArea(JTextArea area) {
+        area.setFont(fontRegular(14));
+        area.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(10, 12, 10, 12)
+        ));
+        area.setBackground(Color.WHITE);
+    }
+    
+    // Style untuk checkbox modern
+    public static void styleCheckBox(JCheckBox checkbox) {
+        checkbox.setFont(fontRegular(14));
+        checkbox.setFocusPainted(false);
+        checkbox.setBackground(null);
+    }
+    
+    // Style untuk tabel modern
+    public static void styleTable(JTable table) {
+        table.setFont(fontRegular(14));
+        table.getTableHeader().setFont(fontMedium(14));
+        table.getTableHeader().setBackground(PRIMARY);
+        table.getTableHeader().setForeground(Color.WHITE);
+        table.getTableHeader().setOpaque(false);
+        table.setRowHeight(30);
+        table.setShowGrid(false);
+        table.setIntercellSpacing(new Dimension(0, 0));
+        table.setSelectionBackground(new Color(74, 111, 255, 30));
+        table.setSelectionForeground(TEXT);
+        
+        // Center align header
+        DefaultTableCellRenderer headerRenderer = new DefaultTableCellRenderer();
+        headerRenderer.setHorizontalAlignment(JLabel.CENTER);
+        for (int i = 0; i < table.getColumnCount(); i++) {
+            table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
+        }
     }
 }

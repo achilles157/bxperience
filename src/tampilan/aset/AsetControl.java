@@ -19,19 +19,27 @@ public class AsetControl extends JPanel {
     public AsetControl() {
         setLayout(new BorderLayout());
         setBackground(UIStyle.BACKGROUND);
+        setBorder(new EmptyBorder(20, 20, 20, 20));
 
-        UIStyle.RoundedPanel mainPanel = new UIStyle.RoundedPanel(25);
+        UIStyle.RoundedPanel mainPanel = new UIStyle.RoundedPanel(20);
         mainPanel.setLayout(new BorderLayout(20, 20));
-        mainPanel.setBackground(Color.WHITE);
-        mainPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
+        mainPanel.setBackground(UIStyle.CARD_BG);
+        mainPanel.setBorder(new EmptyBorder(25, 25, 25, 25));
 
-        JLabel title = new JLabel("Submit Aset");
+        JLabel title = new JLabel("Tambah Aset Baru");
         title.setFont(UIStyle.fontBold(24));
         title.setHorizontalAlignment(SwingConstants.CENTER);
         title.setForeground(UIStyle.PRIMARY);
+        title.setBorder(new EmptyBorder(0, 0, 15, 0));
 
-        JPanel formPanel = new JPanel(new GridLayout(0, 2, 10, 10));
+        JPanel formPanel = new JPanel(new GridBagLayout());
         formPanel.setOpaque(false);
+        formPanel.setBorder(new EmptyBorder(10, 10, 10, 10));
+        
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.insets = new Insets(8, 8, 8, 8);
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.anchor = GridBagConstraints.WEST;
 
         // Auto-generate ID aset saat form dibuat
         idField = new JTextField(generateIdAset());
@@ -39,35 +47,34 @@ public class AsetControl extends JPanel {
         namaField = new JTextField();
         kodeField = new JTextField(generateKodeBarang("PC GAMING") + "000");
         kodeField.setEditable(false);
-        kodeField.setEditable(false);
         kategoriCombo = new JComboBox<>(new String[]{
-    "PC GAMING", "RACING SIMULATOR", "MOTION RACING SIMULATOR", "FLIGHT SIMULATOR",
-    "VIP DUOS", "VIP SQUAD", "PS5 OPEN SPACE", "PLAYSTATION 5", "PSVR 2",
-    "VR OPULUS META SQUES 2", "VR OPULUS META SQUES 3", "XBOX S SERIES", "NINTENDO SWITCH CADANGAN"
-});
-kategoriCombo.addActionListener(new ActionListener() {
-    public void actionPerformed(ActionEvent e) {
-        String kategori = kategoriCombo.getSelectedItem().toString();
-        String prefix = generateKodeBarang(kategori);
-        int nextNumber = 1;
+            "PC GAMING", "RACING SIMULATOR", "MOTION RACING SIMULATOR", "FLIGHT SIMULATOR",
+            "VIP DUOS", "VIP SQUAD", "PS5 OPEN SPACE", "PLAYSTATION 5", "PSVR 2",
+            "VR OPULUS META SQUES 2", "VR OPULUS META SQUES 3", "XBOX S SERIES", "NINTENDO SWITCH CADANGAN"
+        });
+        kategoriCombo.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                String kategori = kategoriCombo.getSelectedItem().toString();
+                String prefix = generateKodeBarang(kategori);
+                int nextNumber = 1;
 
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement()) {
-            ResultSet rs = stmt.executeQuery("SELECT kode_barang FROM aset WHERE kode_barang LIKE '" + prefix + "%' ORDER BY kode_barang DESC LIMIT 1");
-            if (rs.next()) {
-                String lastKode = rs.getString("kode_barang");
-                if (lastKode != null && lastKode.startsWith(prefix)) {
-                    String numberPart = lastKode.substring(prefix.length());
-                    nextNumber = Integer.parseInt(numberPart) + 1;
+                try (Connection conn = DatabaseConnection.getConnection();
+                     Statement stmt = conn.createStatement()) {
+                    ResultSet rs = stmt.executeQuery("SELECT kode_barang FROM aset WHERE kode_barang LIKE '" + prefix + "%' ORDER BY kode_barang DESC LIMIT 1");
+                    if (rs.next()) {
+                        String lastKode = rs.getString("kode_barang");
+                        if (lastKode != null && lastKode.startsWith(prefix)) {
+                            String numberPart = lastKode.substring(prefix.length());
+                            nextNumber = Integer.parseInt(numberPart) + 1;
+                        }
+                    }
+                } catch (Exception ex) {
+                    ex.printStackTrace();
                 }
-            }
-        } catch (Exception ex) {
-            ex.printStackTrace();
-        }
 
-        kodeField.setText(prefix + String.format("%03d", nextNumber));
-    }
-});
+                kodeField.setText(prefix + String.format("%03d", nextNumber));
+            }
+        });
         deskripsiArea = new JTextArea(3, 20);
         jumlahBarangField = new JTextField();
         hargaPerMenitField = new JTextField();
@@ -75,25 +82,91 @@ kategoriCombo.addActionListener(new ActionListener() {
         tersediaCheckbox = new JCheckBox("Tersedia");
         disewakanCheckbox = new JCheckBox("Disewakan");
 
-        tambahButton = new JButton("Tambah Aset");
+        tambahButton = UIStyle.modernButton("Tambah Aset");
         tambahButton.setBackground(UIStyle.PRIMARY);
-        tambahButton.setForeground(UIStyle.PRIMARY);
-        tambahButton.setFocusPainted(false);
 
-        formPanel.add(new JLabel("ID Aset")); formPanel.add(idField);
-        formPanel.add(new JLabel("Nama Barang")); formPanel.add(namaField);
-        formPanel.add(new JLabel("Kode Barang")); formPanel.add(kodeField);
-        formPanel.add(new JLabel("Kategori")); formPanel.add(kategoriCombo);
-        formPanel.add(new JLabel("Deskripsi")); formPanel.add(new JScrollPane(deskripsiArea));
-        formPanel.add(new JLabel("Jumlah Barang")); formPanel.add(jumlahBarangField);
-        formPanel.add(new JLabel("Harga per Menit")); formPanel.add(hargaPerMenitField);
-        formPanel.add(new JLabel("Harga per Hari")); formPanel.add(hargaPerHariField);
-        formPanel.add(new JLabel("Status Tersedia")); formPanel.add(tersediaCheckbox);
-        formPanel.add(new JLabel("Status Disewakan")); formPanel.add(disewakanCheckbox);
-        formPanel.add(new JLabel("")); formPanel.add(tambahButton);
+        // Apply styles to components
+        UIStyle.styleTextField(idField);
+        UIStyle.styleTextField(namaField);
+        UIStyle.styleTextField(kodeField);
+        UIStyle.styleComboBox(kategoriCombo);
+        UIStyle.styleTextArea(deskripsiArea);
+        UIStyle.styleTextField(jumlahBarangField);
+        UIStyle.styleTextField(hargaPerMenitField);
+        UIStyle.styleTextField(hargaPerHariField);
+        UIStyle.styleCheckBox(tersediaCheckbox);
+        UIStyle.styleCheckBox(disewakanCheckbox);
 
+        // Add components to form with proper spacing
+        gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.3;
+        formPanel.add(createLabel("ID Aset"), gbc);
+        gbc.gridx = 1; gbc.weightx = 0.7;
+        formPanel.add(idField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 1;
+        formPanel.add(createLabel("Nama Barang"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(namaField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 2;
+        formPanel.add(createLabel("Kode Barang"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(kodeField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 3;
+        formPanel.add(createLabel("Kategori"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(kategoriCombo, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 4;
+        formPanel.add(createLabel("Deskripsi"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(new JScrollPane(deskripsiArea), gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 5;
+        formPanel.add(createLabel("Jumlah Barang"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(jumlahBarangField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 6;
+        formPanel.add(createLabel("Harga per Menit"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(hargaPerMenitField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 7;
+        formPanel.add(createLabel("Harga per Hari"), gbc);
+        gbc.gridx = 1;
+        formPanel.add(hargaPerHariField, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 8;
+        formPanel.add(createLabel("Status"), gbc);
+        gbc.gridx = 1;
+        JPanel statusPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 0));
+        statusPanel.setOpaque(false);
+        statusPanel.add(tersediaCheckbox);
+        statusPanel.add(disewakanCheckbox);
+        formPanel.add(statusPanel, gbc);
+        
+        gbc.gridx = 0; gbc.gridy = 9; gbc.gridwidth = 2;
+        gbc.anchor = GridBagConstraints.CENTER;
+        formPanel.add(tambahButton, gbc);
+        
+        // Add glue to push everything up and prevent empty space
+        gbc.gridx = 0; gbc.gridy = 10; gbc.gridwidth = 2;
+        gbc.weighty = 1.0; // This will take any extra vertical space
+        formPanel.add(Box.createVerticalGlue(), gbc);
+
+        // Create a scroll pane for the form panel
+        JScrollPane scrollPane = new JScrollPane(formPanel);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.getViewport().setBackground(UIStyle.CARD_BG);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        // Remove the default border from the scrollbar
+        scrollPane.getVerticalScrollBar().setUI(new ModernScrollBarUI());
+        
         mainPanel.add(title, BorderLayout.NORTH);
-        mainPanel.add(formPanel, BorderLayout.CENTER);
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
         add(mainPanel, BorderLayout.CENTER);
 
         disewakanCheckbox.addActionListener(new ActionListener() {
@@ -184,35 +257,42 @@ kategoriCombo.addActionListener(new ActionListener() {
             }
         });
     }
+    
+    private JLabel createLabel(String text) {
+        JLabel label = new JLabel(text);
+        label.setFont(UIStyle.fontMedium(14));
+        label.setForeground(UIStyle.TEXT);
+        return label;
+    }
 
     private boolean validateInput() {
         boolean valid = true;
         if (namaField.getText().trim().isEmpty()) {
-            namaField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            namaField.setBorder(BorderFactory.createLineBorder(UIStyle.DANGER_COLOR, 1, true));
             valid = false;
         } else {
-            namaField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+            UIStyle.styleTextField(namaField);
         }
     
         if (jumlahBarangField.getText().trim().isEmpty()) {
-            jumlahBarangField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            jumlahBarangField.setBorder(BorderFactory.createLineBorder(UIStyle.DANGER_COLOR, 1, true));
             valid = false;
         } else {
-            jumlahBarangField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+            UIStyle.styleTextField(jumlahBarangField);
         }
         
         if (hargaPerMenitField.getText().trim().isEmpty()) {
-            hargaPerMenitField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            hargaPerMenitField.setBorder(BorderFactory.createLineBorder(UIStyle.DANGER_COLOR, 1, true));
             valid = false;
         } else {
-            hargaPerMenitField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+            UIStyle.styleTextField(hargaPerMenitField);
         }
     
         if (disewakanCheckbox.isSelected() && hargaPerHariField.getText().trim().isEmpty()) {
-            hargaPerHariField.setBorder(BorderFactory.createLineBorder(Color.RED));
+            hargaPerHariField.setBorder(BorderFactory.createLineBorder(UIStyle.DANGER_COLOR, 1, true));
             valid = false;
         } else {
-            hargaPerHariField.setBorder(UIManager.getLookAndFeel().getDefaults().getBorder("TextField.border"));
+            UIStyle.styleTextField(hargaPerHariField);
         }
         
         return valid;
@@ -252,42 +332,102 @@ kategoriCombo.addActionListener(new ActionListener() {
     }
 
     private String generateIdAset() {
-    String prefix = "AST";
-    int counter = 1;
-    try (Connection conn = DatabaseConnection.getConnection()) {
-        Statement stmt = conn.createStatement();
-        ResultSet rs = stmt.executeQuery("SELECT id_aset FROM aset ORDER BY id_aset DESC LIMIT 1");
-        if (rs.next()) {
-            String lastId = rs.getString("id_aset");
-            if (lastId != null && lastId.startsWith(prefix)) {
-                String numberPart = lastId.substring(prefix.length());
-                counter = Integer.parseInt(numberPart) + 1;
+        String prefix = "AST";
+        int counter = 1;
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            Statement stmt = conn.createStatement();
+            ResultSet rs = stmt.executeQuery("SELECT id_aset FROM aset ORDER BY id_aset DESC LIMIT 1");
+            if (rs.next()) {
+                String lastId = rs.getString("id_aset");
+                if (lastId != null && lastId.startsWith(prefix)) {
+                    String numberPart = lastId.substring(prefix.length());
+                    counter = Integer.parseInt(numberPart) + 1;
+                }
             }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-    } catch (Exception e) {
-        e.printStackTrace();
+        return prefix + String.format("%03d", counter);
     }
-    return prefix + String.format("%03d", counter);
-}
 
     private String generateKodeBarang(String kategori) {
-    String prefix;
-    switch (kategori.toUpperCase()) {
-        case "PC GAMING": prefix = "PC"; break;
-        case "MOTION RACING SIMULATOR": prefix = "MRS"; break;
-        case "RACING SIMULATOR": prefix = "RS"; break;
-        case "FLIGHT SIMULATOR": prefix = "FS"; break;
-        case "VIP DUOS": prefix = "VD"; break;
-        case "VIP SQUAD": prefix = "VS"; break;
-        case "PS5 OPEN SPACE": prefix = "PO"; break;
-        case "PLAYSTATION 5": prefix = "PS5"; break;
-        case "PSVR 2": prefix = "PV2"; break;
-        case "VR OPULUS META SQUES 2": prefix = "VR2"; break;
-        case "VR OPULUS META SQUES 3": prefix = "VR3"; break;
-        case "XBOX S SERIES": prefix = "XS"; break;
-        case "NINTENDO SWITCH CADANGAN": prefix = "NS"; break;
-        default: prefix = "KD"; break;
+        String prefix;
+        switch (kategori.toUpperCase()) {
+            case "PC GAMING": prefix = "PC"; break;
+            case "MOTION RACING SIMULATOR": prefix = "MRS"; break;
+            case "RACING SIMULATOR": prefix = "RS"; break;
+            case "FLIGHT SIMULATOR": prefix = "FS"; break;
+            case "VIP DUOS": prefix = "VD"; break;
+            case "VIP SQUAD": prefix = "VS"; break;
+            case "PS5 OPEN SPACE": prefix = "PO"; break;
+            case "PLAYSTATION 5": prefix = "PS5"; break;
+            case "PSVR 2": prefix = "PV2"; break;
+            case "VR OPULUS META SQUES 2": prefix = "VR2"; break;
+            case "VR OPULUS META SQUES 3": prefix = "VR3"; break;
+            case "XBOX S SERIES": prefix = "XS"; break;
+            case "NINTENDO SWITCH CADANGAN": prefix = "NS"; break;
+            default: prefix = "KD"; break;
+        }
+        return prefix;
     }
-    return prefix;
-}
+    
+    // Custom scroll bar UI for a modern look
+    private static class ModernScrollBarUI extends javax.swing.plaf.basic.BasicScrollBarUI {
+        private static final int SCROLL_BAR_ALPHA_ROLLOVER = 100;
+        private static final int SCROLL_BAR_ALPHA = 60;
+        private static final int THUMB_SIZE = 8;
+        private static final Color THUMB_COLOR = UIStyle.PRIMARY;
+
+        public ModernScrollBarUI() {
+        }
+
+        @Override
+        protected JButton createDecreaseButton(int orientation) {
+            return createInvisibleButton();
+        }
+
+        @Override
+        protected JButton createIncreaseButton(int orientation) {
+            return createInvisibleButton();
+        }
+
+        private JButton createInvisibleButton() {
+            JButton button = new JButton();
+            button.setPreferredSize(new Dimension(0, 0));
+            button.setMinimumSize(new Dimension(0, 0));
+            button.setMaximumSize(new Dimension(0, 0));
+            return button;
+        }
+
+        @Override
+        protected void paintTrack(Graphics g, JComponent c, Rectangle trackBounds) {
+            // Paint no track
+        }
+
+        @Override
+        protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+            int alpha = isThumbRollover() ? SCROLL_BAR_ALPHA_ROLLOVER : SCROLL_BAR_ALPHA;
+            int orientation = scrollbar.getOrientation();
+            int x = thumbBounds.x;
+            int y = thumbBounds.y;
+
+            int width = orientation == JScrollBar.VERTICAL ? THUMB_SIZE : thumbBounds.width;
+            width = Math.max(width, THUMB_SIZE);
+
+            int height = orientation == JScrollBar.VERTICAL ? thumbBounds.height : THUMB_SIZE;
+            height = Math.max(height, THUMB_SIZE);
+
+            Graphics2D graphics2D = (Graphics2D) g.create();
+            graphics2D.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            graphics2D.setColor(new Color(THUMB_COLOR.getRed(), THUMB_COLOR.getGreen(), THUMB_COLOR.getBlue(), alpha));
+            graphics2D.fillRoundRect(x, y, width, height, 10, 10);
+            graphics2D.dispose();
+        }
+
+        @Override
+        protected void setThumbBounds(int x, int y, int width, int height) {
+            super.setThumbBounds(x, y, width, height);
+            scrollbar.repaint();
+        }
+    }
 }

@@ -5,7 +5,7 @@ import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
-    private static final String URL = "jdbc:mysql://localhost:3307/bxperience";
+    private static final String URL = "jdbc:mysql://localhost:3306/bxperience";
     private static final String USER = "root"; // ganti jika user database Anda berbeda
     private static final String PASSWORD = ""; // ganti jika Anda memakai password
 

@@ -26,6 +26,7 @@ public class BookingManual extends JPanel {
 
     public BookingManual() {
         setLayout(new BorderLayout());
+        setBackground(UIStyle.BACKGROUND);
         initHeader();
         initForm();
 
@@ -36,14 +37,16 @@ public class BookingManual extends JPanel {
     }
 
     private void initHeader() {
-        headerPanel = new UIStyle.RoundedPanel(20);
+        headerPanel = new UIStyle.RoundedPanel(20, false);
         headerPanel.setLayout(new GridBagLayout());
         headerPanel.setBackground(UIStyle.PRIMARY);
-        headerPanel.setPreferredSize(new Dimension(1024, 80));
+        headerPanel.setPreferredSize(new Dimension(1024, 100));
+        headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 30));
 
         titleLabel = new JLabel("FORM BOOKING EXPERIENCE");
-        titleLabel.setFont(UIStyle.fontBold(24));
+        titleLabel.setFont(UIStyle.fontBold(28));
         titleLabel.setForeground(Color.WHITE);
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
 
         headerPanel.add(titleLabel);
     }
@@ -51,54 +54,89 @@ public class BookingManual extends JPanel {
     private void initForm() {
         formPanel = new UIStyle.RoundedPanel(25);
         formPanel.setLayout(new GridBagLayout());
-        formPanel.setBackground(UIStyle.BACKGROUND);
-        formPanel.setBorder(BorderFactory.createEmptyBorder(20, 40, 20, 40));
+        formPanel.setBackground(UIStyle.CARD_BG);
+        formPanel.setBorder(BorderFactory.createEmptyBorder(30, 50, 30, 50));
 
         GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(12, 12, 12, 12);
+        gbc.insets = new Insets(15, 15, 15, 15);
         gbc.anchor = GridBagConstraints.WEST;
         gbc.fill = GridBagConstraints.HORIZONTAL;
         gbc.weightx = 1.0;
 
         int row = 0;
 
+        // Title for form section
+        JLabel formTitle = new JLabel("Data Pemesan");
+        formTitle.setFont(UIStyle.fontBold(20));
+        formTitle.setForeground(UIStyle.PRIMARY);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formPanel.add(formTitle, gbc);
+        gbc.gridwidth = 1;
+        
         namaField = new JTextField(20);
+        UIStyle.styleTextField(namaField);
         addFormRow("Nama Lengkap:", namaField, gbc, row++);
         
         instagramField = new JTextField(20);
+        UIStyle.styleTextField(instagramField);
         addFormRow("Akun Instagram:", instagramField, gbc, row++);
         
         noHpField = new JTextField(20);
+        UIStyle.styleTextField(noHpField);
         addFormRow("Nomor HP:", noHpField, gbc, row++);
         
         emailField = new JTextField(20);
+        UIStyle.styleTextField(emailField);
         addFormRow("Email:", emailField, gbc, row++);
         
+        // Booking details title
+        JLabel bookingTitle = new JLabel("Detail Booking");
+        bookingTitle.setFont(UIStyle.fontBold(20));
+        bookingTitle.setForeground(UIStyle.PRIMARY);
+        gbc.gridx = 0;
+        gbc.gridy = row++;
+        gbc.gridwidth = 2;
+        formPanel.add(bookingTitle, gbc);
+        gbc.gridwidth = 1;
+        
         tanggalField = new JDateChooser();
+        tanggalField.setFont(UIStyle.fontRegular(14));
+        tanggalField.setPreferredSize(new Dimension(200, 40));
+        tanggalField.setBackground(Color.WHITE);
+        tanggalField.setForeground(UIStyle.TEXT);
         addFormRow("Tanggal Booking:", tanggalField, gbc, row++);
         
         jamDropdown = new JComboBox<>(new String[] {
             "10:00", "11:00", "12:00", "13:00", "14:00",
             "15:00", "16:00", "17:00", "18:00", "19:00"
         });
+        UIStyle.styleComboBox(jamDropdown);
         addFormRow("Jam Booking:", jamDropdown, gbc, row++);
 
         experienceDropdown = new JComboBox<>();
         experienceDropdown.addItem("Pilih Experience");
+        UIStyle.styleComboBox(experienceDropdown);
         addFormRow("Pesan Experience:", experienceDropdown, gbc, row++);
 
         jumlahField = new JTextField(5);
+        UIStyle.styleTextField(jumlahField);
         addFormRow("Jumlah Item:", jumlahField, gbc, row++);
 
         JPanel durasiPanel = new JPanel(new BorderLayout(10, 0));
+        durasiPanel.setBackground(UIStyle.CARD_BG);
         durasiField = new JTextField();
+        UIStyle.styleTextField(durasiField);
         satuanDurasi = new JComboBox<>(new String[] {"Menit", "Jam"});
+        UIStyle.styleComboBox(satuanDurasi);
         durasiPanel.add(durasiField, BorderLayout.CENTER);
         durasiPanel.add(satuanDurasi, BorderLayout.EAST);
         addFormRow("Durasi Penggunaan:", durasiPanel, gbc, row++);
 
         JCheckBox addOnCheck = new JCheckBox("Include Device Tambahan");
-        addOnCheck.setBackground(UIStyle.BACKGROUND);
+        UIStyle.styleCheckBox(addOnCheck);
+        addOnCheck.setBackground(UIStyle.CARD_BG);
         gbc.gridx = 0;
         gbc.gridy = row;
         formPanel.add(new JLabel("Add-On Device:"), gbc);
@@ -107,8 +145,9 @@ public class BookingManual extends JPanel {
         row++;
 
         deviceFieldPanel = new JPanel(new BorderLayout());
-        deviceFieldPanel.setBackground(UIStyle.BACKGROUND);
+        deviceFieldPanel.setBackground(UIStyle.CARD_BG);
         deviceField = new JTextField(20);
+        UIStyle.styleTextField(deviceField);
         deviceFieldPanel.add(deviceField, BorderLayout.CENTER);
         deviceFieldPanel.setVisible(false);
 
@@ -121,7 +160,8 @@ public class BookingManual extends JPanel {
 
         // Total Harga Label
         totalHargaLabel = new JLabel("Total Harga: Rp0");
-        totalHargaLabel.setFont(UIStyle.fontBold(16));
+        totalHargaLabel.setFont(UIStyle.fontBold(18));
+        totalHargaLabel.setForeground(UIStyle.PRIMARY);
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.gridwidth = 2;
@@ -129,9 +169,11 @@ public class BookingManual extends JPanel {
         formPanel.add(totalHargaLabel, gbc);
         row++;
 
-        JButton kirimButton = new JButton("Kirim Booking");
-        kirimButton.setBackground(Color.WHITE);
-        kirimButton.setForeground(UIStyle.PRIMARY);
+        JButton kirimButton = new UIStyle.RoundedButton("Kirim Booking", 10);
+        kirimButton.setBackground(UIStyle.PRIMARY);
+        kirimButton.setForeground(Color.WHITE);
+        kirimButton.setFont(UIStyle.fontBold(16));
+        kirimButton.setPreferredSize(new Dimension(200, 50));
         kirimButton.addActionListener(e -> submitBooking());
         
         gbc.gridx = 0;
@@ -198,10 +240,14 @@ public class BookingManual extends JPanel {
     }
 
     private void addFormRow(String labelText, JComponent field, GridBagConstraints gbc, int row) {
+        JLabel label = new JLabel(labelText);
+        label.setFont(UIStyle.fontMedium(16));
+        label.setForeground(UIStyle.TEXT);
+        
         gbc.gridx = 0;
         gbc.gridy = row;
         gbc.gridwidth = 1;
-        formPanel.add(new JLabel(labelText), gbc);
+        formPanel.add(label, gbc);
         gbc.gridx = 1;
         formPanel.add(field, gbc);
     }
