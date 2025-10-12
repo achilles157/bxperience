@@ -2,11 +2,20 @@ package tampilan.util;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
 import javax.swing.table.DefaultTableCellRenderer;
+
+import com.toedter.calendar.JTextFieldDateEditor;
+
+import tampilan.aset.AsetControl;
+import tampilan.aset.AsetManajemenPanel;
+import tampilan.booking.BookingManual;
+import tampilan.booking.PlayAtHomeRentalPanel;
+import tampilan.monitoring.MonitoringPanel;
 
 public class UIStyle {
 
@@ -253,5 +262,34 @@ public class UIStyle {
         for (int i = 0; i < table.getColumnCount(); i++) {
             table.getColumnModel().getColumn(i).setHeaderRenderer(headerRenderer);
         }
+    }
+    
+    // Dialog pesan modern
+    public static void showSuccessMessage(Component parent, String message) {
+        JOptionPane.showMessageDialog(parent, message, "Sukses", JOptionPane.INFORMATION_MESSAGE);
+    }
+
+    public static void showErrorMessage(MonitoringPanel parent, String message) {
+        JOptionPane.showMessageDialog(parent, message, "Error", JOptionPane.ERROR_MESSAGE);
+    }
+    /**
+     * Memberikan gaya modern pada komponen JDateChooser.
+     * @param dateChooser Komponen JDateChooser yang akan di-style.
+     */
+    public static void styleDateChooser(com.toedter.calendar.JDateChooser dateChooser) {
+        dateChooser.setFont(fontRegular(14));
+        dateChooser.setPreferredSize(new Dimension(200, 40));
+        dateChooser.setBackground(Color.WHITE);
+        dateChooser.getJCalendar().getDayChooser().setWeekdayForeground(TEXT_LIGHT);
+        dateChooser.getJCalendar().getDayChooser().setSundayForeground(DANGER_COLOR);
+        dateChooser.getJCalendar().getDayChooser().setDecorationBackgroundColor(PRIMARY_LIGHT);
+        
+        // Style text field di dalam JDateChooser
+        JTextFieldDateEditor editor = (JTextFieldDateEditor) dateChooser.getDateEditor();
+        editor.setFont(fontRegular(14));
+        editor.setBorder(BorderFactory.createCompoundBorder(
+            new LineBorder(new Color(0, 0, 0, 20), 1, true),
+            new EmptyBorder(10, 12, 10, 12)
+        ));
     }
 }

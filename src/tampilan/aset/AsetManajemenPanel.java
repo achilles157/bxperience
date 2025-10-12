@@ -193,7 +193,7 @@ public class AsetManajemenPanel extends JPanel {
     private void saveChanges() {
         int[] selectedRows = asetTable.getSelectedRows();
         if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Tidak ada perubahan yang disimpan.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            UIStyle.showSuccessMessage(this, "Tidak ada perubahan yang disimpan.");
             return;
         }
 
@@ -242,40 +242,102 @@ public class AsetManajemenPanel extends JPanel {
                     if (result >= 0) successCount++;
                 }
                 
-                JOptionPane.showMessageDialog(this, 
-                    "Berhasil menyimpan " + successCount + " dari " + results.length + " perubahan.",
-                    "Info", JOptionPane.INFORMATION_MESSAGE);
+                UIStyle.showSuccessMessage(this, 
+                    "Berhasil menyimpan " + successCount + " dari " + results.length + " perubahan.");
             }
         } catch (SQLException | NumberFormatException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Gagal menyimpan perubahan: " + ex.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(null, "Gagal menyimpan perubahan: ");
         }
     }
 
     private void loadAsetData() {
+        setInteractions(false);
         model.setRowCount(0);
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM aset")) {
 
-            while (rs.next()) {
-                model.addRow(new Object[]{
-                    rs.getString("id_aset"),
-                    rs.getString("nama_barang"),
-                    rs.getString("kode_barang"),
-                    rs.getString("kategori"),
-                    rs.getString("deskripsi"),
-                    rs.getDouble("harga_sewa_menit"),
-                    rs.getDouble("harga_sewa_hari"),
-                    rs.getBoolean("status_tersedia"),
-                    rs.getBoolean("status_disewakan")
-                });
+        new SwingWorker<DefaultTableModel, Void>() {
+            @Override
+            protected DefaultTableModel doInBackground() throws Exception {
+                // Kolom didefinisikan di sini untuk model sementara
+                String[] columnNames = {"ID Aset", "Nama Barang", "Kode Barang", "Kategori", "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"};
+                
+                DefaultTableModel tempModel = new DefaultTableModel(columnNames, 0) {
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        if (columnIndex == 7 || columnIndex == 8) { // Kolom Tersedia dan Disewakan
+                            return Boolean.class;
+                        }
+                        return String.class;
+                    }
+                    
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        // Hanya izinkan edit saat mode edit aktif dan bukan kolom ID
+                        return isEditing && column != 0;
+                    }
+                };
+
+                String query = "SELECT * FROM aset";
+                try (Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement pst = conn.prepareStatement(query);
+                    ResultSet rs = pst.executeQuery()) {
+
+                    while (rs.next()) {
+                        tempModel.addRow(new Object[]{
+                            rs.getString("id_aset"),
+                            rs.getString("nama_barang"),
+                            rs.getString("kode_barang"),
+                            rs.getString("kategori"),
+                            rs.getString("deskripsi"),
+                            rs.getDouble("harga_sewa_menit"),
+                            rs.getDouble("harga_sewa_hari"),
+                            rs.getBoolean("status_tersedia"),
+                            rs.getBoolean("status_disewakan")
+                        });
+                    }
+                }
+                return tempModel;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel resultModel = get();
+                    
+                    // --- PERBAIKAN DI SINI ---
+                    // Konversi array nama kolom menjadi Vector
+                    java.util.Vector<String> columnIdentifiers = new java.util.Vector<>();
+                    String[] columns = {"ID Aset", "Nama Barang", "Kode Barang", "Kategori", "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"};
+                    for (String column : columns) {
+                        columnIdentifiers.add(column);
+                    }
+                    
+                    // Gunakan setDataVector dengan dua argumen Vector
+                    model.setDataVector(resultModel.getDataVector(), columnIdentifiers);
+                    
+                    // Set ulang editor untuk kolom boolean setelah model diperbarui
+                    asetTable.getColumnModel().getColumn(7).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+                    asetTable.getColumnModel().getColumn(8).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(AsetManajemenPanel.this, "Gagal memuat data aset: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    setInteractions(true); // Aktifkan kembali interaksi
+                }
+            }
+        }.execute();
+    }   
+
+    private void setInteractions(boolean enabled) {
+        searchField.setEnabled(enabled);
+        filterCombo.setEnabled(enabled);
+        asetTable.setEnabled(enabled);
+        editSaveButton.setEnabled(enabled);
+        deleteButton.setEnabled(enabled);
+        refreshButton.setEnabled(enabled);
+        // Tampilkan kursor tunggu saat memuat
+        setCursor(enabled ? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
     }
 
     private void filter() {
@@ -293,7 +355,7 @@ public class AsetManajemenPanel extends JPanel {
     private void deleteSelectedRows() {
         int[] selectedRows = asetTable.getSelectedRows();
         if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Pilih baris yang ingin dihapus.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            UIStyle.showSuccessMessage(this, "Pilih baris yang ingin dihapus.");
             return;
         }
 
@@ -354,23 +416,18 @@ public class AsetManajemenPanel extends JPanel {
                         }
                     }
                     
-                    JOptionPane.showMessageDialog(this, 
-                        "Berhasil menghapus " + successCount + " dari " + results.length + " aset beserta data terkaitnya.",
-                        "Info", JOptionPane.INFORMATION_MESSAGE);
+                    UIStyle.showSuccessMessage(this, 
+                        "Berhasil menghapus " + successCount + " dari " + results.length + " aset beserta data terkaitnya.");
                         
                     refreshData(); // Muat ulang data tabel
                 } catch (SQLException ex) {
                     conn.rollback(); // Jika terjadi error, batalkan semua perubahan dalam transaksi
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, 
-                        "Gagal menghapus data (transaksi dibatalkan): " + ex.getMessage(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                    UIStyle.showErrorMessage(null, "Gagal menghapus data (transaksi dibatalkan): " + ex.getMessage());
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, 
-                    "Gagal mendapatkan koneksi ke database: " + ex.getMessage(), 
-                    "Error Koneksi", JOptionPane.ERROR_MESSAGE);
+                UIStyle.showErrorMessage(null, "Gagal mendapatkan koneksi ke database: " + ex.getMessage());
             }
         }
     }

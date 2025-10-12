@@ -102,10 +102,7 @@ public class BookingManual extends JPanel {
         gbc.gridwidth = 1;
         
         tanggalField = new JDateChooser();
-        tanggalField.setFont(UIStyle.fontRegular(14));
-        tanggalField.setPreferredSize(new Dimension(200, 40));
-        tanggalField.setBackground(Color.WHITE);
-        tanggalField.setForeground(UIStyle.TEXT);
+        UIStyle.styleDateChooser(tanggalField); // Cukup panggil metode ini
         addFormRow("Tanggal Booking:", tanggalField, gbc, row++);
         
         jamDropdown = new JComboBox<>(new String[] {
@@ -253,10 +250,10 @@ public class BookingManual extends JPanel {
     }
 
     private void loadAvailableExperiences() {
+        String query = "SELECT DISTINCT kategori FROM aset WHERE status_tersedia = 1";
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery(
-                 "SELECT DISTINCT kategori FROM aset WHERE status_tersedia = 1")) {
+            PreparedStatement pst = conn.prepareStatement(query);
+            ResultSet rs = pst.executeQuery()) {
             
             experienceDropdown.removeAllItems();
             experienceDropdown.addItem("Pilih Experience");
@@ -266,8 +263,7 @@ public class BookingManual extends JPanel {
             }
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal memuat data experience: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(this, "Gagal memuat data experience: " + e.getMessage());
         }
     }
 
@@ -282,8 +278,7 @@ public class BookingManual extends JPanel {
             jumlahField.getText().trim().isEmpty() ||
             durasiField.getText().trim().isEmpty()) {
             
-            JOptionPane.showMessageDialog(this, "Harap lengkapi semua data yang diperlukan", 
-                "Peringatan", JOptionPane.WARNING_MESSAGE);
+            UIStyle.showErrorMessage(this, "Harap lengkapi semua data yang diperlukan");
             return;
         }
 
@@ -299,8 +294,7 @@ public class BookingManual extends JPanel {
                 throw new NumberFormatException();
             }
         } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Jumlah dan durasi harus berupa angka positif", 
-                "Input Tidak Valid", JOptionPane.WARNING_MESSAGE);
+            UIStyle.showErrorMessage(this, "Jumlah dan durasi harus berupa angka positif");
             return;
         }
 
@@ -340,9 +334,8 @@ public class BookingManual extends JPanel {
             }
             
             if (availableCount < jumlah) {
-                JOptionPane.showMessageDialog(this, 
-                    "Tidak cukup unit yang tersedia pada waktu tersebut. Tersedia: " + availableCount, 
-                    "Stok Tidak Cukup", JOptionPane.WARNING_MESSAGE);
+                UIStyle.showErrorMessage(null, checkAvailability +
+                    "Tidak cukup aset tersedia untuk booking ini. Tersedia: " + availableCount);
                 return;
             }
             
@@ -419,17 +412,17 @@ public class BookingManual extends JPanel {
             
             conn.commit();
             
-            JOptionPane.showMessageDialog(this, 
-                "Booking berhasil dibuat!", 
-                "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            UIStyle.showSuccessMessage(this, 
+                "Booking berhasil dibuat!" + 
+                "Sukses" + JOptionPane.INFORMATION_MESSAGE);
             
             resetForm();
             
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Gagal menyimpan booking: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(this, 
+                "Gagal menyimpan booking: " + e.getMessage() + 
+                "Error" + JOptionPane.ERROR_MESSAGE);
         }
     }
 

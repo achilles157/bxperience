@@ -58,9 +58,14 @@ public class AsetControl extends JPanel {
                 String prefix = generateKodeBarang(kategori);
                 int nextNumber = 1;
 
+                String query = "SELECT kode_barang FROM aset WHERE kode_barang LIKE ? ORDER BY kode_barang DESC LIMIT 1";
+
                 try (Connection conn = DatabaseConnection.getConnection();
-                     Statement stmt = conn.createStatement()) {
-                    ResultSet rs = stmt.executeQuery("SELECT kode_barang FROM aset WHERE kode_barang LIKE '" + prefix + "%' ORDER BY kode_barang DESC LIMIT 1");
+                    PreparedStatement pst = conn.prepareStatement(query)) {
+
+                    pst.setString(1, prefix + "%");
+                    ResultSet rs = pst.executeQuery();
+
                     if (rs.next()) {
                         String lastKode = rs.getString("kode_barang");
                         if (lastKode != null && lastKode.startsWith(prefix)) {
@@ -70,6 +75,7 @@ public class AsetControl extends JPanel {
                     }
                 } catch (Exception ex) {
                     ex.printStackTrace();
+                    UIStyle.showErrorMessage(AsetControl.this, "Gagal menghasilkan Kode Barang: " + ex.getMessage());
                 }
 
                 kodeField.setText(prefix + String.format("%03d", nextNumber));
@@ -96,6 +102,12 @@ public class AsetControl extends JPanel {
         UIStyle.styleTextField(hargaPerHariField);
         UIStyle.styleCheckBox(tersediaCheckbox);
         UIStyle.styleCheckBox(disewakanCheckbox);
+
+        // Terapkan validasi real-time
+        addValidationListener(namaField);
+        addValidationListener(jumlahBarangField);
+        addValidationListener(hargaPerMenitField);
+        addValidationListener(hargaPerHariField);
 
         // Add components to form with proper spacing
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0.3;
@@ -174,19 +186,24 @@ public class AsetControl extends JPanel {
                 boolean selected = disewakanCheckbox.isSelected();
                 hargaPerHariField.setEnabled(selected);
                 if (!selected) {
-                    hargaPerHariField.setText(""); // Kosongkan inputan jika checkbox tidak dipilih
+                    hargaPerHariField.setText(""); // Kosongkan inputan
+                    // Kembalikan border ke normal jika tidak dipilih
+                    UIStyle.styleTextField(hargaPerHariField);
+                } else {
+                    // Jika dipilih dan kosong, langsung tandai sebagai error
+                    if (hargaPerHariField.getText().trim().isEmpty()) {
+                        hargaPerHariField.setBorder(BorderFactory.createLineBorder(UIStyle.DANGER_COLOR, 1, true));
+                    }
                 }
             }
         });
-
-        hargaPerHariField.setEnabled(false);
 
         // Tambah highlight merah untuk field kosong dan validasi manual
         tambahButton.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 // Validasi input (sudah bagus, kita pertahankan)
                 if (!validateInput()) {
-                    JOptionPane.showMessageDialog(AsetControl.this, "Mohon lengkapi semua kolom yang wajib diisi.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+                    UIStyle.showErrorMessage(AsetControl.this, "Mohon lengkapi semua kolom yang wajib diisi.");
                     return;
                 }
         
@@ -206,7 +223,7 @@ public class AsetControl extends JPanel {
                         hargaHari = Double.parseDouble(hargaPerHariField.getText());
                     }
                 } catch (NumberFormatException ex) {
-                    JOptionPane.showMessageDialog(AsetControl.this, "Input jumlah atau harga harus berupa angka yang valid.", "Format Salah", JOptionPane.WARNING_MESSAGE);
+                    UIStyle.showErrorMessage(AsetControl.this, "Input jumlah atau harga harus berupa angka yang valid.");
                     return;
                 }
         
@@ -248,11 +265,11 @@ public class AsetControl extends JPanel {
                         }
                     }
         
-                    JOptionPane.showMessageDialog(AsetControl.this, jumlah + " aset berhasil ditambahkan!");
+                    UIStyle.showSuccessMessage(AsetControl.this, jumlah + " aset berhasil ditambahkan!");
                     clearForm();
                 } catch (SQLException ex) {
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(AsetControl.this, "Gagal menambahkan aset: " + ex.getMessage());
+                    UIStyle.showSuccessMessage(AsetControl.this, "Gagal menambahkan aset: " + ex.getMessage());
                 }
             }
         });
@@ -334,9 +351,11 @@ public class AsetControl extends JPanel {
     private String generateIdAset() {
         String prefix = "AST";
         int counter = 1;
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            Statement stmt = conn.createStatement();
-            ResultSet rs = stmt.executeQuery("SELECT id_aset FROM aset ORDER BY id_aset DESC LIMIT 1");
+        // Menggunakan try-with-resources untuk memastikan koneksi dan statement ditutup
+        try (Connection conn = DatabaseConnection.getConnection();
+            PreparedStatement pst = conn.prepareStatement("SELECT id_aset FROM aset ORDER BY id_aset DESC LIMIT 1");
+            ResultSet rs = pst.executeQuery()) {
+
             if (rs.next()) {
                 String lastId = rs.getString("id_aset");
                 if (lastId != null && lastId.startsWith(prefix)) {
@@ -346,6 +365,8 @@ public class AsetControl extends JPanel {
             }
         } catch (Exception e) {
             e.printStackTrace();
+            // Tampilkan pesan error jika gagal generate ID
+            UIStyle.showErrorMessage(this, "Gagal menghasilkan ID Aset baru: " + e.getMessage());
         }
         return prefix + String.format("%03d", counter);
     }
@@ -429,5 +450,19 @@ public class AsetControl extends JPanel {
             super.setThumbBounds(x, y, width, height);
             scrollbar.repaint();
         }
+    }
+    // Tambahkan metode baru ini di dalam kelas AsetControl
+    private void addValidationListener(JTextField field) {
+        field.addFocusListener(new FocusAdapter() {
+            @Override
+            public void focusLost(FocusEvent e) {
+                if (field.getText().trim().isEmpty()) {
+                    field.setBorder(BorderFactory.createLineBorder(UIStyle.DANGER_COLOR, 1, true));
+                } else {
+                    // Kembalikan ke style normal jika sudah diisi
+                    UIStyle.styleTextField(field);
+                }
+            }
+        });
     }
 }

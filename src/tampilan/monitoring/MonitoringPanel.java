@@ -136,105 +136,91 @@ public class MonitoringPanel extends JPanel {
         return scrollPane;
     }
 
+    // Ganti metode loadSummaryData() yang lama
     private void loadSummaryData() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // Hitung item tersedia
-            String tersediaQuery = "SELECT COUNT(*) FROM aset WHERE status_tersedia = 1 AND status_disewakan = 1";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(tersediaQuery)) {
-                if (rs.next()) {
-                    totalTersediaLabel.setText("<html><div style='text-align:center'>Tersedia<br><span style='font-size:24px'>" + rs.getInt(1) + "</span></div></html>");
+        new SwingWorker<int[], Void>() {
+            @Override
+            protected int[] doInBackground() throws Exception {
+                int[] summary = new int[3]; // 0: tersedia, 1: disewa, 2: booking
+                String tersediaQuery = "SELECT COUNT(*) FROM aset WHERE status_tersedia = 1 AND status_disewakan = 1";
+                String disewaQuery = "SELECT COUNT(DISTINCT pd.id_aset) FROM playathome_detail pd JOIN playathome p ON pd.id_playhome = p.id_playhome WHERE p.status = 'aktif'";
+                String bookingQuery = "SELECT COUNT(DISTINCT bd.id_aset) FROM booking_detail bd JOIN booking b ON bd.id_booking = b.id_booking WHERE b.status IS NULL OR b.status NOT IN ('completed', 'cancelled')";
+
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    try (PreparedStatement pst = conn.prepareStatement(tersediaQuery); ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) summary[0] = rs.getInt(1);
+                    }
+                    try (PreparedStatement pst = conn.prepareStatement(disewaQuery); ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) summary[1] = rs.getInt(1);
+                    }
+                    try (PreparedStatement pst = conn.prepareStatement(bookingQuery); ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) summary[2] = rs.getInt(1);
+                    }
                 }
+                return summary;
             }
 
-            // Hitung item disewa (playathome) - hanya yang status aktif
-            String disewaQuery = "SELECT COUNT(DISTINCT pd.id_aset) FROM playathome_detail pd " +
-                               "JOIN playathome p ON pd.id_playhome = p.id_playhome " +
-                               "WHERE p.status = 'aktif'";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(disewaQuery)) {
-                if (rs.next()) {
-                    totalDisewaLabel.setText("<html><div style='text-align:center'>Disewa<br><span style='font-size:24px'>" + rs.getInt(1) + "</span></div></html>");
+            @Override
+            protected void done() {
+                try {
+                    int[] summary = get();
+                    totalTersediaLabel.setText("<html><div style='text-align:center'>Tersedia<br><span style='font-size:24px'>" + summary[0] + "</span></div></html>");
+                    totalDisewaLabel.setText("<html><div style='text-align:center'>Disewa<br><span style='font-size:24px'>" + summary[1] + "</span></div></html>");
+                    totalBookingLabel.setText("<html><div style='text-align:center'>Booking<br><span style='font-size:24px'>" + summary[2] + "</span></div></html>");
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(MonitoringPanel.this, "Gagal memuat data summary: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
                 }
             }
-
-            // Hitung item booking - hanya yang status bukan completed/cancelled
-            String bookingQuery = "SELECT COUNT(DISTINCT bd.id_aset) FROM booking_detail bd " +
-                                "JOIN booking b ON bd.id_booking = b.id_booking " +
-                                "WHERE b.status IS NULL OR b.status NOT IN ('completed', 'cancelled')";
-            try (Statement stmt = conn.createStatement();
-                 ResultSet rs = stmt.executeQuery(bookingQuery)) {
-                if (rs.next()) {
-                    totalBookingLabel.setText("<html><div style='text-align:center'>Booking<br><span style='font-size:24px'>" + rs.getInt(1) + "</span></div></html>");
-                }
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal memuat data summary: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        }.execute();
     }
 
-   private void loadBookingData() {
-    tableModel.setRowCount(0); // Clear existing data
-    
-    // Query untuk data booking (hanya yang belum selesai)
-    String bookingQuery = "SELECT b.id_booking as id, b.nama, " +
-             "GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, " +
-             "b.tanggal, b.jam, b.durasi_menit, " +
-             "'Booking' as jenis, " +
-             "COALESCE(b.status, 'Booking') as status " +
-             "FROM booking b " +
-             "JOIN booking_detail bd ON b.id_booking = bd.id_booking " +
-             "LEFT JOIN aset a ON bd.id_aset = a.id_aset " +
-             "WHERE (b.status IS NULL OR b.status NOT IN ('completed', 'cancelled')) " +
-             "AND b.tanggal >= CURDATE() " +
-             "GROUP BY b.id_booking ";
-    
-    // Query untuk data playathome (hanya yang aktif)
-    String playhomeQuery = "SELECT p.id_playhome as id, p.nama, " +
-             "GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, " +
-             "p.tgl_mulai as tanggal, NULL as jam, " +
-             "DATEDIFF(p.tgl_selesai, p.tgl_mulai) as durasi_menit, " +
-             "'PlayAtHome' as jenis, " +
-             "'Disewa' as status " +
-             "FROM playathome p " +
-             "JOIN playathome_detail pd ON p.id_playhome = pd.id_playhome " +
-             "LEFT JOIN aset a ON pd.id_aset = a.id_aset " +
-             "WHERE p.status = 'aktif' " +
-             "GROUP BY p.id_playhome ";
-    
-    // Gabungkan kedua query dengan UNION
-    String fullQuery = "(" + bookingQuery + ") UNION (" + playhomeQuery + ") " +
-                     "ORDER BY tanggal DESC, jam DESC";
-    
-    try (Connection conn = DatabaseConnection.getConnection();
-         Statement stmt = conn.createStatement();
-         ResultSet rs = stmt.executeQuery(fullQuery)) {
-        
-        while (rs.next()) {
-            Object[] row = {
-                rs.getString("jenis") + "-" + rs.getInt("id"),
-                rs.getString("nama"),
-                rs.getString("items"),
-                rs.getDate("tanggal"),
-                rs.getTime("jam"),
-                rs.getString("jenis").equals("Booking") ? 
-                    rs.getInt("durasi_menit") + " menit" : 
-                    rs.getInt("durasi_menit") + " hari",
-                rs.getString("status"),
-                rs.getString("status").equals("Disewa") ? "Aktif" : "Kembalikan"
-            };
-            tableModel.addRow(row);
-        }
-        
-    } catch (SQLException e) {
-        e.printStackTrace();
-        JOptionPane.showMessageDialog(this, "Gagal memuat data: " + e.getMessage(), 
-            "Error", JOptionPane.ERROR_MESSAGE);
+
+// Ganti metode loadBookingData() yang lama
+    private void loadBookingData() {
+        tableModel.setRowCount(0); // Kosongkan tabel
+
+        new SwingWorker<DefaultTableModel, Void>() {
+            @Override
+            protected DefaultTableModel doInBackground() throws Exception {
+                DefaultTableModel tempModel = (DefaultTableModel) table.getModel();
+                
+                String bookingQuery = "SELECT b.id_booking as id, b.nama, GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, b.tanggal, b.jam, b.durasi_menit, 'Booking' as jenis, COALESCE(b.status, 'Booking') as status FROM booking b JOIN booking_detail bd ON b.id_booking = bd.id_booking LEFT JOIN aset a ON bd.id_aset = a.id_aset WHERE (b.status IS NULL OR b.status NOT IN ('completed', 'cancelled')) AND b.tanggal >= CURDATE() GROUP BY b.id_booking ";
+                String playhomeQuery = "SELECT p.id_playhome as id, p.nama, GROUP_CONCAT(a.nama_barang SEPARATOR ', ') as items, p.tgl_mulai as tanggal, NULL as jam, DATEDIFF(p.tgl_selesai, p.tgl_mulai) as durasi_menit, 'PlayAtHome' as jenis, 'Disewa' as status FROM playathome p JOIN playathome_detail pd ON p.id_playhome = pd.id_playhome LEFT JOIN aset a ON pd.id_aset = a.id_aset WHERE p.status = 'aktif' GROUP BY p.id_playhome ";
+                String fullQuery = "(" + bookingQuery + ") UNION (" + playhomeQuery + ") ORDER BY tanggal DESC, jam DESC";
+
+                try (Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement pst = conn.prepareStatement(fullQuery);
+                    ResultSet rs = pst.executeQuery()) {
+                    
+                    while (rs.next()) {
+                        tempModel.addRow(new Object[]{
+                            rs.getString("jenis") + "-" + rs.getInt("id"),
+                            rs.getString("nama"),
+                            rs.getString("items"),
+                            rs.getDate("tanggal"),
+                            rs.getTime("jam"),
+                            rs.getString("jenis").equals("Booking") ? rs.getInt("durasi_menit") + " menit" : rs.getInt("durasi_menit") + " hari",
+                            rs.getString("status"),
+                            rs.getString("status").equals("Disewa") ? "Aktif" : "Kembalikan"
+                        });
+                    }
+                }
+                return tempModel;
+            }
+
+            @Override
+            protected void done() {
+                try {
+                    // Proses ini tidak memerlukan update model karena sudah dimanipulasi di doInBackground
+                    get(); // Cukup panggil get() untuk menangkap exception jika ada
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(MonitoringPanel.this, "Gagal memuat data transaksi: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                }
+            }
+        }.execute();
     }
-}
     
     private void kembalikanItem(String idTransaksi) {
         try (Connection conn = DatabaseConnection.getConnection()) {
@@ -291,8 +277,8 @@ public class MonitoringPanel extends JPanel {
             
             conn.commit();
             
-            JOptionPane.showMessageDialog(this, "Item berhasil dikembalikan", 
-                "Sukses", JOptionPane.INFORMATION_MESSAGE);
+            UIStyle.showSuccessMessage(this, "Item berhasil dikembalikan" + 
+                "Sukses" + JOptionPane.INFORMATION_MESSAGE);
             
             // Refresh data
             loadSummaryData();
@@ -300,16 +286,16 @@ public class MonitoringPanel extends JPanel {
             
         } catch (SQLException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal mengembalikan item: " + e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(this, "Gagal mengembalikan item: " + e.getMessage() + 
+                "Error" + JOptionPane.ERROR_MESSAGE);
         } catch (NumberFormatException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Format ID transaksi tidak valid", 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(this, "Format ID transaksi tidak valid" + 
+                "Error" + JOptionPane.ERROR_MESSAGE);
         } catch (IllegalArgumentException e) {
             e.printStackTrace();
-            JOptionPane.showMessageDialog(this, e.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(this, e.getMessage() + 
+                "Error" + JOptionPane.ERROR_MESSAGE);
         }
     }
 
