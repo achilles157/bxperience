@@ -9,6 +9,7 @@ import java.awt.event.*;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import tampilan.util.UIStyle;
@@ -28,11 +29,11 @@ public class AsetManajemenPanel extends JPanel {
     private JLabel loadingLabel;
 
     public AsetManajemenPanel() {
-        setLayout(new BorderLayout()); 
+        setLayout(new BorderLayout(20, 20));
         setBackground(UIStyle.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-     // --- Panel Kontrol (Judul, Cari, Filter) ---
+        // --- Panel Kontrol (Judul, Cari, Filter) ---
         UIStyle.RoundedPanel titlePanel = new UIStyle.RoundedPanel(15, false);
         titlePanel.setLayout(new BorderLayout(15, 15));
         titlePanel.setBackground(UIStyle.CARD_BG);
@@ -69,23 +70,20 @@ public class AsetManajemenPanel extends JPanel {
         searchPanel.add(filterCombo, gbc);
         
         titlePanel.add(searchPanel, BorderLayout.CENTER);
+        add(titlePanel, BorderLayout.NORTH);
 
-        // Table setup
+        // --- Inisialisasi Tabel ---
         model = new DefaultTableModel(new String[]{
             "ID Aset", "Nama Barang", "Kode Barang", "Kategori",
             "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"
         }, 0) {
             @Override
             public Class<?> getColumnClass(int columnIndex) {
-                if (columnIndex == 7 || columnIndex == 8) { // Tersedia and Disewakan columns
-                    return Boolean.class;
-                }
+                if (columnIndex == 7 || columnIndex == 8) { return Boolean.class; }
                 return String.class;
             }
-            
             @Override
             public boolean isCellEditable(int row, int column) {
-                // Only allow editing when in edit mode and not the ID column
                 return isEditing && column != 0;
             }
         };
@@ -93,42 +91,8 @@ public class AsetManajemenPanel extends JPanel {
         asetTable = new JTable(model);
         UIStyle.styleTable(asetTable);
         asetTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        asetTable.setAutoCreateRowSorter(true);
-        asetTable.getTableHeader().setReorderingAllowed(false);
-        
-        // Set custom editor for boolean columns
-        asetTable.getColumnModel().getColumn(7).setCellEditor(new DefaultCellEditor(new JCheckBox()));
-        asetTable.getColumnModel().getColumn(8).setCellEditor(new DefaultCellEditor(new JCheckBox()));
-        
-        // Enable sorting
         sorter = new TableRowSorter<>(model);
         asetTable.setRowSorter(sorter);
-        
-        // Add mouse listener for header clicks to show sort indicator
-        asetTable.getTableHeader().addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                int column = asetTable.columnAtPoint(e.getPoint());
-                if (column >= 0) {
-                    SortOrder order = asetTable.getRowSorter().getSortKeys().isEmpty() || 
-                                     asetTable.getRowSorter().getSortKeys().get(0).getSortOrder() == SortOrder.DESCENDING ?
-                                     SortOrder.ASCENDING : SortOrder.DESCENDING;
-                    sorter.setSortKeys(List.of(new RowSorter.SortKey(column, order)));
-                }
-            }
-        });
-
-        // Add search functionality
-        searchField.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) { filter(); }
-            @Override
-            public void removeUpdate(DocumentEvent e) { filter(); }
-            @Override
-            public void changedUpdate(DocumentEvent e) { filter(); }
-        });
-
-        filterCombo.addActionListener(e -> filter());
 
         JScrollPane scrollPane = new JScrollPane(asetTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
@@ -143,9 +107,8 @@ public class AsetManajemenPanel extends JPanel {
 
         // --- Pengaturan JLayeredPane ---
         layeredPane = new JLayeredPane();
-        layeredPane.setLayout(new GridBagLayout()); // Gunakan GridBagLayout untuk memusatkan label
+        layeredPane.setLayout(new GridBagLayout()); 
 
-        // Atur constraints agar scrollPane (tabel) mengisi seluruh area
         GridBagConstraints gbcLayer = new GridBagConstraints();
         gbcLayer.gridx = 0;
         gbcLayer.gridy = 0;
@@ -153,12 +116,12 @@ public class AsetManajemenPanel extends JPanel {
         gbcLayer.weighty = 1.0;
         gbcLayer.fill = GridBagConstraints.BOTH;
 
-        layeredPane.add(scrollPane, gbcLayer, JLayeredPane.DEFAULT_LAYER); // Tabel di lapisan bawah
-        layeredPane.add(loadingLabel, gbcLayer, JLayeredPane.PALETTE_LAYER); // Loading label di lapisan atas
+        layeredPane.add(scrollPane, gbcLayer, JLayeredPane.DEFAULT_LAYER);
+        layeredPane.add(loadingLabel, gbcLayer, JLayeredPane.PALETTE_LAYER);
 
-        add(layeredPane, BorderLayout.CENTER); // Tambahkan layeredPane ke panel utama
+        add(layeredPane, BorderLayout.CENTER);
 
-        // Button Panel
+        // --- Panel Tombol ---
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
         buttonPanel.setOpaque(false);
         
@@ -293,29 +256,23 @@ public class AsetManajemenPanel extends JPanel {
         new SwingWorker<DefaultTableModel, Void>() {
             @Override
             protected DefaultTableModel doInBackground() throws Exception {
-                // Kolom didefinisikan di sini untuk model sementara
                 String[] columnNames = {"ID Aset", "Nama Barang", "Kode Barang", "Kategori", "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"};
-                
                 DefaultTableModel tempModel = new DefaultTableModel(columnNames, 0) {
-                    @Override
+                     @Override
                     public Class<?> getColumnClass(int columnIndex) {
-                        if (columnIndex == 7 || columnIndex == 8) { // Kolom Tersedia dan Disewakan
-                            return Boolean.class;
-                        }
+                        if (columnIndex == 7 || columnIndex == 8) { return Boolean.class; }
                         return String.class;
                     }
-                    
                     @Override
                     public boolean isCellEditable(int row, int column) {
-                        // Hanya izinkan edit saat mode edit aktif dan bukan kolom ID
                         return isEditing && column != 0;
                     }
                 };
 
                 String query = "SELECT * FROM aset";
                 try (Connection conn = DatabaseConnection.getConnection();
-                    PreparedStatement pst = conn.prepareStatement(query);
-                    ResultSet rs = pst.executeQuery()) {
+                     PreparedStatement pst = conn.prepareStatement(query);
+                     ResultSet rs = pst.executeQuery()) {
 
                     while (rs.next()) {
                         tempModel.addRow(new Object[]{
@@ -338,27 +295,22 @@ public class AsetManajemenPanel extends JPanel {
             protected void done() {
                 try {
                     DefaultTableModel resultModel = get();
-                    
-                    // --- PERBAIKAN DI SINI ---
-                    // Konversi array nama kolom menjadi Vector
-                    java.util.Vector<String> columnIdentifiers = new java.util.Vector<>();
+                    Vector<String> columnIdentifiers = new Vector<>();
                     String[] columns = {"ID Aset", "Nama Barang", "Kode Barang", "Kategori", "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"};
                     for (String column : columns) {
                         columnIdentifiers.add(column);
                     }
                     
-                    // Gunakan setDataVector dengan dua argumen Vector
                     model.setDataVector(resultModel.getDataVector(), columnIdentifiers);
                     
-                    // Set ulang editor untuk kolom boolean setelah model diperbarui
                     asetTable.getColumnModel().getColumn(7).setCellEditor(new DefaultCellEditor(new JCheckBox()));
                     asetTable.getColumnModel().getColumn(8).setCellEditor(new DefaultCellEditor(new JCheckBox()));
 
                 } catch (Exception e) {
                     e.printStackTrace();
-                    JOptionPane.showMessageDialog(AsetManajemenPanel.this, "Gagal memuat data aset: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                    UIStyle.showErrorMessage(AsetManajemenPanel.this, "Gagal memuat data aset: " + e.getMessage());
                 } finally {
-                    setInteractions(true); // Aktifkan kembali interaksi
+                    setInteractions(true);
                 }
             }
         }.execute();
@@ -372,21 +324,20 @@ public class AsetManajemenPanel extends JPanel {
         deleteButton.setEnabled(enabled);
         refreshButton.setEnabled(enabled);
         setCursor(enabled ? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-        
-        // Kontrol visibilitas loading label di sini
         loadingLabel.setVisible(!enabled); 
     }
 
     private void filter() {
-        String text = searchField.getText().toLowerCase();
+        String text = searchField.getText();
         String category = filterCombo.getSelectedItem().toString();
         
-        RowFilter<TableModel, Object> rf = RowFilter.andFilter(List.of(
-            RowFilter.regexFilter("(?i)" + text),
-            RowFilter.regexFilter(category.equals("Semua") ? ".*" : "(?i)" + category, 3) // Filter by category column
-        ));
+        List<RowFilter<Object, Object>> filters = new ArrayList<>();
+        filters.add(RowFilter.regexFilter("(?i)" + text));
+        if (!"Semua".equals(category)) {
+            filters.add(RowFilter.regexFilter("(?i)" + category, 3));
+        }
         
-        sorter.setRowFilter(rf);
+        sorter.setRowFilter(RowFilter.andFilter(filters));
     }
 
     private void deleteSelectedRows() {
