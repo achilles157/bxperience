@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.text.NumberFormat;
 import java.util.Locale;
 import javax.imageio.ImageIO;
@@ -29,39 +28,54 @@ public class TampilanHomeManual extends JPanel {
     }
 
     private void loadStatisticsData() {
-        try (Connection conn = DatabaseConnection.getConnection()) {
-            // Hitung total aset
-            String sqlTotalAset = "SELECT COUNT(*) as total FROM aset";
-            try (PreparedStatement pst = conn.prepareStatement(sqlTotalAset);
-                 ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    totalAset = rs.getInt("total");
+    // Beri umpan balik saat data dimuat di konstruktor
+        setStatsLoading(true);
+
+        new SwingWorker<Object[], Void>() {
+            @Override
+            protected Object[] doInBackground() throws Exception {
+                Object[] stats = new Object[3];
+                try (Connection conn = DatabaseConnection.getConnection()) {
+                    // Hitung total aset
+                    String sqlTotalAset = "SELECT COUNT(*) as total FROM aset";
+                    try (PreparedStatement pst = conn.prepareStatement(sqlTotalAset); ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) stats[0] = rs.getInt("total");
+                    }
+
+                    // Hitung booking aktif
+                    String sqlBookingAktif = "SELECT COUNT(*) as total FROM booking WHERE status = 'confirmed' AND DATE(created_at) = CURDATE()";
+                    try (PreparedStatement pst = conn.prepareStatement(sqlBookingAktif); ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) stats[1] = rs.getInt("total");
+                    }
+
+                    // Hitung pendapatan hari ini
+                    String sqlPendapatan = "SELECT COALESCE(SUM(total_harga), 0) as total FROM booking WHERE status = 'completed' AND DATE(created_at) = CURDATE()";
+                    try (PreparedStatement pst = conn.prepareStatement(sqlPendapatan); ResultSet rs = pst.executeQuery()) {
+                        if (rs.next()) stats[2] = rs.getDouble("total");
+                    }
                 }
+                return stats;
             }
 
-            // Hitung booking aktif (status confirmed)
-            String sqlBookingAktif = "SELECT COUNT(*) as total FROM booking WHERE status = 'confirmed' AND DATE(created_at) = CURDATE()";
-            try (PreparedStatement pst = conn.prepareStatement(sqlBookingAktif);
-                 ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    bookingAktif = rs.getInt("total");
+            @Override
+            protected void done() {
+                try {
+                    Object[] stats = get();
+                    totalAset = (int) stats[0];
+                    bookingAktif = (int) stats[1];
+                    pendapatanHariIni = (double) stats[2];
+
+                    // Panggil refresh untuk memperbarui UI setelah data didapat
+                    updateStatsUI();
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(TampilanHomeManual.this, "Gagal memuat data statistik: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    setStatsLoading(false);
                 }
             }
-
-            // Hitung pendapatan hari ini
-            String sqlPendapatan = "SELECT COALESCE(SUM(total_harga), 0) as total FROM booking WHERE status = 'completed' AND DATE(created_at) = CURDATE()";
-            try (PreparedStatement pst = conn.prepareStatement(sqlPendapatan);
-                 ResultSet rs = pst.executeQuery()) {
-                if (rs.next()) {
-                    pendapatanHariIni = rs.getDouble("total");
-                }
-            }
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Gagal memuat data statistik: " + e.getMessage(), 
-                                         "Error", JOptionPane.ERROR_MESSAGE);
-        }
+        }.execute();
     }
 
     private void initComponents() {
@@ -166,12 +180,30 @@ public class TampilanHomeManual extends JPanel {
     
     private void refreshData() {
         loadStatisticsData();
-        // Update stats panel
-        content.remove(statsPanel);
+}
+
+    private void updateStatsUI() {
+        // Hapus panel statistik lama dan buat yang baru dengan data terkini
+        if (statsPanel != null) {
+            content.remove(statsPanel);
+        }
         statsPanel = createStatsPanel();
         content.add(statsPanel, 4); // Index 4 adalah posisi stats panel
         content.revalidate();
         content.repaint();
+    }
+
+// Tambahkan metode baru untuk menampilkan status loading
+    private void setStatsLoading(boolean isLoading) {
+        if (isLoading && statsPanel != null) {
+            // Tampilkan teks "Memuat..." pada setiap kartu statistik
+            ((JLabel) ((JPanel) ((UIStyle.RoundedPanel) statsPanel.getComponent(0)).getComponent(0)).getComponent(2)).setText("Memuat...");
+            ((JLabel) ((JPanel) ((UIStyle.RoundedPanel) statsPanel.getComponent(1)).getComponent(0)).getComponent(2)).setText("Memuat...");
+            ((JLabel) ((JPanel) ((UIStyle.RoundedPanel) statsPanel.getComponent(2)).getComponent(0)).getComponent(2)).setText("Memuat...");
+        }
+        // Nonaktifkan tombol refresh saat sedang memuat
+        // (Asumsikan Anda memiliki referensi ke tombol refresh)
+        // refreshButton.setEnabled(!isLoading); 
     }
 
     private JPanel createStatsPanel() {

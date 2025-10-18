@@ -111,15 +111,12 @@ public class PlayAtHomeManual extends JPanel {
         tambahItemButton.setBackground(UIStyle.PRIMARY);
         tambahItemButton.setForeground(Color.WHITE);
         
+        // --- KODE BARU ---
         this.dariDate = new JDateChooser();
-        dariDate.setFont(UIStyle.fontRegular(14));
-        dariDate.setPreferredSize(new Dimension(200, 40));
-        dariDate.setBackground(Color.WHITE);
-        
+        UIStyle.styleDateChooser(dariDate); // Panggil metode style
+
         this.sampaiDate = new JDateChooser();
-        sampaiDate.setFont(UIStyle.fontRegular(14));
-        sampaiDate.setPreferredSize(new Dimension(200, 40));
-        sampaiDate.setBackground(Color.WHITE);
+        UIStyle.styleDateChooser(sampaiDate); // Panggil metode style
 
         JComboBox<String> metodeCombo = new JComboBox<>(new String[]{"Pick Up", "Delivery"});
         UIStyle.styleComboBox(metodeCombo);
@@ -475,9 +472,10 @@ public class PlayAtHomeManual extends JPanel {
     }
 
     private void loadCategories() {
+        String query = "SELECT DISTINCT kategori FROM aset";
         try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT DISTINCT kategori FROM aset")) {
+            PreparedStatement pst = conn.prepareStatement(query);
+            ResultSet rs = pst.executeQuery()) {
             while (rs.next()) {
                 kategoriCombo.addItem(rs.getString("kategori"));
             }

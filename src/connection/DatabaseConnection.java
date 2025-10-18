@@ -1,7 +1,8 @@
 package connection;
 
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.SQLException;
 
 public class DatabaseConnection {
@@ -9,33 +10,55 @@ public class DatabaseConnection {
     private static final String USER = "root"; // ganti jika user database Anda berbeda
     private static final String PASSWORD = ""; // ganti jika Anda memakai password
 
-    private static Connection connection = null;
+    private static HikariDataSource dataSource;
 
-    public static Connection getConnection() {
-    try {
-        if (connection == null || connection.isClosed()) {
-            Class.forName("com.mysql.cj.jdbc.Driver");
-            connection = DriverManager.getConnection(URL, USER, PASSWORD);
-            System.out.println("Koneksi ke database berhasil.");
+    // Blok statis untuk menginisialisasi connection pool saat kelas dimuat
+    static {
+        HikariConfig config = new HikariConfig();
+        config.setJdbcUrl(URL);
+        config.setUsername(USER);
+        config.setPassword(PASSWORD);
+
+        // Pengaturan optimal untuk performa
+        config.setMaximumPoolSize(10); // Jumlah koneksi maksimum di pool
+        config.setMinimumIdle(5);      // Jumlah koneksi minimum yang siap sedia
+        config.setIdleTimeout(600000); // Waktu (ms) sebelum koneksi idle ditutup
+        config.setConnectionTimeout(30000); // Waktu (ms) timeout untuk mendapatkan koneksi
+
+        // Opsi tambahan untuk keandalan
+        config.addDataSourceProperty("cachePrepStmts", "true");
+        config.addDataSourceProperty("prepStmtCacheSize", "250");
+        config.addDataSourceProperty("prepStmtCacheSqlLimit", "2048");
+
+        try {
+            dataSource = new HikariDataSource(config);
+            System.out.println("Connection pool berhasil diinisialisasi.");
+        } catch (Exception e) {
+            System.err.println("Gagal menginisialisasi connection pool: " + e.getMessage());
+            e.printStackTrace();
         }
-    } catch (ClassNotFoundException e) {
-        System.err.println("Driver JDBC tidak ditemukan: " + e.getMessage());
-    } catch (SQLException e) {
-        System.err.println("Koneksi gagal: " + e.getMessage());
     }
-    return connection;
-}
 
+    /**
+     * Mengambil koneksi dari connection pool.
+     * @return Connection object dari pool.
+     * @throws SQLException jika gagal mendapatkan koneksi.
+     */
+    public static Connection getConnection() throws SQLException {
+        if (dataSource == null) {
+            throw new SQLException("Connection pool belum diinisialisasi.");
+        }
+        System.out.println("Mengambil koneksi dari pool...");
+        return dataSource.getConnection();
+    }
 
-    public static void closeConnection() {
-        if (connection != null) {
-            try {
-                connection.close();
-                connection = null;
-                System.out.println("Koneksi ditutup.");
-            } catch (SQLException e) {
-                System.err.println("Gagal menutup koneksi: " + e.getMessage());
-            }
+    /**
+     * Menutup seluruh connection pool. Panggil ini saat aplikasi ditutup.
+     */
+    public static void closeConnectionPool() {
+        if (dataSource != null && !dataSource.isClosed()) {
+            dataSource.close();
+            System.out.println("Connection pool ditutup.");
         }
     }
 }

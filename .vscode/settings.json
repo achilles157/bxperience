@@ -3,6 +3,8 @@
     "java.project.referencedLibraries": [
         "src/lib/**/*.jar",
         "lib/jcalendar-1.4.jar",
-        "lib/mysql-connector-j-9.4.0.jar"
+        "lib/mysql-connector-j-9.4.0.jar",
+        "lib/HikariCP-5.1.0.jar",
+        "lib/slf4j-api-2.0.13.jar"
     ]
 }

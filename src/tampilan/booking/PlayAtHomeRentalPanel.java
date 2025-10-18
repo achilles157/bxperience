@@ -39,9 +39,9 @@ public class PlayAtHomeRentalPanel extends JPanel {
         if (testDatabaseConnection()) {
             loadRentalData();
         } else {
-            JOptionPane.showMessageDialog(this,
-                "Gagal terhubung ke database",
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(PlayAtHomeRentalPanel.this,
+                "Gagal terhubung ke database" +
+                "Error" + JOptionPane.ERROR_MESSAGE);
         }
     }
 
@@ -169,30 +169,28 @@ public class PlayAtHomeRentalPanel extends JPanel {
         new SwingWorker<Void, Void>() {
             @Override
             protected Void doInBackground() throws Exception {
-    
                 tableModel.setRowCount(0); // Clear existing data
                 
-                // Debug: Cetak query untuk pengecekan
                 System.out.println("Executing query...");
                 
                 String query = "SELECT p.id_playhome, p.nama, " +
-                             "GROUP_CONCAT(DISTINCT a.nama_barang SEPARATOR ', ') as items, " +
-                             "p.tgl_mulai, p.tgl_selesai, p.metode_pengambilan, " +
-                             "p.alamat_antar, p.alamat_kembali, p.keperluan, " +
-                             "p.total_harga - IFNULL(p.ongkir, 0) as harga, " +
-                             "IFNULL(p.ongkir, 0) as ongkir, " +
-                             "p.total_harga, " +
-                             "p.status " +
-                             "FROM playathome p " +
-                             "LEFT JOIN playathome_detail pd ON p.id_playhome = pd.id_playhome " +
-                             "LEFT JOIN aset a ON pd.id_aset = a.id_aset " +
-                             "WHERE p.status = 'aktif' " +
-                             "GROUP BY p.id_playhome " +
-                             "ORDER BY p.tgl_mulai DESC";
+                            "GROUP_CONCAT(DISTINCT a.nama_barang SEPARATOR ', ') as items, " +
+                            "p.tgl_mulai, p.tgl_selesai, p.metode_pengambilan, " +
+                            "p.alamat_antar, p.alamat_kembali, p.keperluan, " +
+                            "p.total_harga - IFNULL(p.ongkir, 0) as harga, " +
+                            "IFNULL(p.ongkir, 0) as ongkir, " +
+                            "p.total_harga, " +
+                            "p.status " +
+                            "FROM playathome p " +
+                            "LEFT JOIN playathome_detail pd ON p.id_playhome = pd.id_playhome " +
+                            "LEFT JOIN aset a ON pd.id_aset = a.id_aset " +
+                            "WHERE p.status = 'aktif' " +
+                            "GROUP BY p.id_playhome " +
+                            "ORDER BY p.tgl_mulai DESC";
                 
                 try (Connection conn = DatabaseConnection.getConnection();
-                     Statement stmt = conn.createStatement();
-                     ResultSet rs = stmt.executeQuery(query)) {
+                    PreparedStatement pst = conn.prepareStatement(query);
+                    ResultSet rs = pst.executeQuery()) {
                     
                     int rowCount = 0;
                     while (rs.next()) {
@@ -215,7 +213,6 @@ public class PlayAtHomeRentalPanel extends JPanel {
                         tableModel.addRow(row);
                     }
                     
-                    // Debug: Cetak jumlah baris yang ditemukan
                     System.out.println("Jumlah data ditemukan: " + rowCount);
                     
                 } catch (SQLException e) {
@@ -283,11 +280,11 @@ public class PlayAtHomeRentalPanel extends JPanel {
         String namaPenyewa = (String) tableModel.getValueAt(selectedRow, 1);
     
         if ("selesai".equalsIgnoreCase(status)) {
-            JOptionPane.showMessageDialog(this, 
+            UIStyle.showSuccessMessage(this, 
                 "<html><b>Penyewaan ini sudah selesai</b><br>" +
                 "Penyewaan oleh " + namaPenyewa + " (ID: " + idPlayhome + ") " +
-                "sudah ditandai selesai sebelumnya.</html>", 
-                "Informasi", JOptionPane.INFORMATION_MESSAGE);
+                "sudah ditandai selesai sebelumnya.</html>" + 
+                "Informasi" + JOptionPane.INFORMATION_MESSAGE);
             return;
         }
     

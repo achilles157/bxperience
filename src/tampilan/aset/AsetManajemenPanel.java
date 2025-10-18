@@ -24,13 +24,15 @@ public class AsetManajemenPanel extends JPanel {
     private JButton editSaveButton;
     private JButton deleteButton;
     private JButton refreshButton;
+    private JLayeredPane layeredPane;
+    private JLabel loadingLabel;
 
     public AsetManajemenPanel() {
-        setLayout(new BorderLayout(20, 20));
+        setLayout(new BorderLayout()); 
         setBackground(UIStyle.BACKGROUND);
         setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        // Title Panel
+     // --- Panel Kontrol (Judul, Cari, Filter) ---
         UIStyle.RoundedPanel titlePanel = new UIStyle.RoundedPanel(15, false);
         titlePanel.setLayout(new BorderLayout(15, 15));
         titlePanel.setBackground(UIStyle.CARD_BG);
@@ -41,7 +43,6 @@ public class AsetManajemenPanel extends JPanel {
         title.setForeground(UIStyle.PRIMARY);
         titlePanel.add(title, BorderLayout.NORTH);
 
-        // Search and Filter Panel
         JPanel searchPanel = new JPanel(new GridBagLayout());
         searchPanel.setOpaque(false);
         
@@ -50,7 +51,6 @@ public class AsetManajemenPanel extends JPanel {
         gbc.fill = GridBagConstraints.HORIZONTAL;
         
         searchField = new JTextField(20);
-        searchField.setPreferredSize(new Dimension(200, 38));
         UIStyle.styleTextField(searchField);
         
         filterCombo = new JComboBox<>(new String[]{"Semua", "PC GAMING", "RACING SIMULATOR", 
@@ -61,18 +61,14 @@ public class AsetManajemenPanel extends JPanel {
         
         gbc.gridx = 0; gbc.gridy = 0; gbc.weightx = 0;
         searchPanel.add(createLabel("Cari:"), gbc);
-        
         gbc.gridx = 1; gbc.weightx = 0.4;
         searchPanel.add(searchField, gbc);
-        
         gbc.gridx = 2; gbc.weightx = 0;
         searchPanel.add(createLabel("Filter Kategori:"), gbc);
-        
         gbc.gridx = 3; gbc.weightx = 0.3;
         searchPanel.add(filterCombo, gbc);
         
         titlePanel.add(searchPanel, BorderLayout.CENTER);
-        add(titlePanel, BorderLayout.NORTH);
 
         // Table setup
         model = new DefaultTableModel(new String[]{
@@ -136,7 +132,31 @@ public class AsetManajemenPanel extends JPanel {
 
         JScrollPane scrollPane = new JScrollPane(asetTable);
         scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        add(scrollPane, BorderLayout.CENTER);
+
+        // --- Inisialisasi Loading Label ---
+        loadingLabel = new JLabel("Memuat data...", SwingConstants.CENTER);
+        loadingLabel.setFont(UIStyle.fontBold(18));
+        loadingLabel.setForeground(UIStyle.PRIMARY);
+        loadingLabel.setOpaque(true);
+        loadingLabel.setBackground(new Color(255, 255, 255, 200));
+        loadingLabel.setVisible(false);
+
+        // --- Pengaturan JLayeredPane ---
+        layeredPane = new JLayeredPane();
+        layeredPane.setLayout(new GridBagLayout()); // Gunakan GridBagLayout untuk memusatkan label
+
+        // Atur constraints agar scrollPane (tabel) mengisi seluruh area
+        GridBagConstraints gbcLayer = new GridBagConstraints();
+        gbcLayer.gridx = 0;
+        gbcLayer.gridy = 0;
+        gbcLayer.weightx = 1.0;
+        gbcLayer.weighty = 1.0;
+        gbcLayer.fill = GridBagConstraints.BOTH;
+
+        layeredPane.add(scrollPane, gbcLayer, JLayeredPane.DEFAULT_LAYER); // Tabel di lapisan bawah
+        layeredPane.add(loadingLabel, gbcLayer, JLayeredPane.PALETTE_LAYER); // Loading label di lapisan atas
+
+        add(layeredPane, BorderLayout.CENTER); // Tambahkan layeredPane ke panel utama
 
         // Button Panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 10));
@@ -158,6 +178,21 @@ public class AsetManajemenPanel extends JPanel {
         buttonPanel.add(editSaveButton);
         buttonPanel.add(deleteButton);
         add(buttonPanel, BorderLayout.SOUTH);
+
+        // --- Menambahkan semua ke panel utama ---
+        add(titlePanel, BorderLayout.NORTH);
+        // --- KODE PERBAIKAN DI SINI ---
+        add(layeredPane, BorderLayout.CENTER); // Tambahkan layeredPane ke CENTER
+        // --- AKHIR PERBAIKAN ---
+        add(buttonPanel, BorderLayout.SOUTH);
+
+         // Tambahkan listener setelah semua komponen diinisialisasi
+        searchField.getDocument().addDocumentListener(new DocumentListener() {
+            public void insertUpdate(DocumentEvent e) { filter(); }
+            public void removeUpdate(DocumentEvent e) { filter(); }
+            public void changedUpdate(DocumentEvent e) { filter(); }
+        });
+        filterCombo.addActionListener(e -> filter());
 
         loadAsetData();
     }
@@ -193,7 +228,7 @@ public class AsetManajemenPanel extends JPanel {
     private void saveChanges() {
         int[] selectedRows = asetTable.getSelectedRows();
         if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Tidak ada perubahan yang disimpan.", "Info", JOptionPane.INFORMATION_MESSAGE);
+            UIStyle.showSuccessMessage(this, "Tidak ada perubahan yang disimpan.");
             return;
         }
 
@@ -242,40 +277,104 @@ public class AsetManajemenPanel extends JPanel {
                     if (result >= 0) successCount++;
                 }
                 
-                JOptionPane.showMessageDialog(this, 
-                    "Berhasil menyimpan " + successCount + " dari " + results.length + " perubahan.",
-                    "Info", JOptionPane.INFORMATION_MESSAGE);
+                UIStyle.showSuccessMessage(this, 
+                    "Berhasil menyimpan " + successCount + " dari " + results.length + " perubahan.");
             }
         } catch (SQLException | NumberFormatException ex) {
             ex.printStackTrace();
-            JOptionPane.showMessageDialog(this, 
-                "Gagal menyimpan perubahan: " + ex.getMessage(), 
-                "Error", JOptionPane.ERROR_MESSAGE);
+            UIStyle.showErrorMessage(null, "Gagal menyimpan perubahan: ");
         }
     }
 
     private void loadAsetData() {
+        setInteractions(false);
         model.setRowCount(0);
-        try (Connection conn = DatabaseConnection.getConnection();
-             Statement stmt = conn.createStatement();
-             ResultSet rs = stmt.executeQuery("SELECT * FROM aset")) {
 
-            while (rs.next()) {
-                model.addRow(new Object[]{
-                    rs.getString("id_aset"),
-                    rs.getString("nama_barang"),
-                    rs.getString("kode_barang"),
-                    rs.getString("kategori"),
-                    rs.getString("deskripsi"),
-                    rs.getDouble("harga_sewa_menit"),
-                    rs.getDouble("harga_sewa_hari"),
-                    rs.getBoolean("status_tersedia"),
-                    rs.getBoolean("status_disewakan")
-                });
+        new SwingWorker<DefaultTableModel, Void>() {
+            @Override
+            protected DefaultTableModel doInBackground() throws Exception {
+                // Kolom didefinisikan di sini untuk model sementara
+                String[] columnNames = {"ID Aset", "Nama Barang", "Kode Barang", "Kategori", "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"};
+                
+                DefaultTableModel tempModel = new DefaultTableModel(columnNames, 0) {
+                    @Override
+                    public Class<?> getColumnClass(int columnIndex) {
+                        if (columnIndex == 7 || columnIndex == 8) { // Kolom Tersedia dan Disewakan
+                            return Boolean.class;
+                        }
+                        return String.class;
+                    }
+                    
+                    @Override
+                    public boolean isCellEditable(int row, int column) {
+                        // Hanya izinkan edit saat mode edit aktif dan bukan kolom ID
+                        return isEditing && column != 0;
+                    }
+                };
+
+                String query = "SELECT * FROM aset";
+                try (Connection conn = DatabaseConnection.getConnection();
+                    PreparedStatement pst = conn.prepareStatement(query);
+                    ResultSet rs = pst.executeQuery()) {
+
+                    while (rs.next()) {
+                        tempModel.addRow(new Object[]{
+                            rs.getString("id_aset"),
+                            rs.getString("nama_barang"),
+                            rs.getString("kode_barang"),
+                            rs.getString("kategori"),
+                            rs.getString("deskripsi"),
+                            rs.getDouble("harga_sewa_menit"),
+                            rs.getDouble("harga_sewa_hari"),
+                            rs.getBoolean("status_tersedia"),
+                            rs.getBoolean("status_disewakan")
+                        });
+                    }
+                }
+                return tempModel;
             }
-        } catch (SQLException e) {
-            e.printStackTrace();
-        }
+
+            @Override
+            protected void done() {
+                try {
+                    DefaultTableModel resultModel = get();
+                    
+                    // --- PERBAIKAN DI SINI ---
+                    // Konversi array nama kolom menjadi Vector
+                    java.util.Vector<String> columnIdentifiers = new java.util.Vector<>();
+                    String[] columns = {"ID Aset", "Nama Barang", "Kode Barang", "Kategori", "Deskripsi", "Harga/menit", "Harga/hari", "Tersedia", "Disewakan"};
+                    for (String column : columns) {
+                        columnIdentifiers.add(column);
+                    }
+                    
+                    // Gunakan setDataVector dengan dua argumen Vector
+                    model.setDataVector(resultModel.getDataVector(), columnIdentifiers);
+                    
+                    // Set ulang editor untuk kolom boolean setelah model diperbarui
+                    asetTable.getColumnModel().getColumn(7).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+                    asetTable.getColumnModel().getColumn(8).setCellEditor(new DefaultCellEditor(new JCheckBox()));
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                    JOptionPane.showMessageDialog(AsetManajemenPanel.this, "Gagal memuat data aset: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
+                } finally {
+                    setInteractions(true); // Aktifkan kembali interaksi
+                }
+            }
+        }.execute();
+    }   
+
+    private void setInteractions(boolean enabled) {
+        searchField.setEnabled(enabled);
+        filterCombo.setEnabled(enabled);
+        asetTable.setEnabled(enabled);
+        editSaveButton.setEnabled(enabled);
+        deleteButton.setEnabled(enabled);
+        refreshButton.setEnabled(enabled);
+        setCursor(enabled ? Cursor.getDefaultCursor() : Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+        
+        // Kontrol visibilitas loading label di sini
+        loadingLabel.setVisible(!enabled); 
     }
 
     private void filter() {
@@ -293,7 +392,7 @@ public class AsetManajemenPanel extends JPanel {
     private void deleteSelectedRows() {
         int[] selectedRows = asetTable.getSelectedRows();
         if (selectedRows.length == 0) {
-            JOptionPane.showMessageDialog(this, "Pilih baris yang ingin dihapus.", "Peringatan", JOptionPane.WARNING_MESSAGE);
+            UIStyle.showSuccessMessage(this, "Pilih baris yang ingin dihapus.");
             return;
         }
 
@@ -354,23 +453,18 @@ public class AsetManajemenPanel extends JPanel {
                         }
                     }
                     
-                    JOptionPane.showMessageDialog(this, 
-                        "Berhasil menghapus " + successCount + " dari " + results.length + " aset beserta data terkaitnya.",
-                        "Info", JOptionPane.INFORMATION_MESSAGE);
+                    UIStyle.showSuccessMessage(this, 
+                        "Berhasil menghapus " + successCount + " dari " + results.length + " aset beserta data terkaitnya.");
                         
                     refreshData(); // Muat ulang data tabel
                 } catch (SQLException ex) {
                     conn.rollback(); // Jika terjadi error, batalkan semua perubahan dalam transaksi
                     ex.printStackTrace();
-                    JOptionPane.showMessageDialog(this, 
-                        "Gagal menghapus data (transaksi dibatalkan): " + ex.getMessage(), 
-                        "Error", JOptionPane.ERROR_MESSAGE);
+                    UIStyle.showErrorMessage(null, "Gagal menghapus data (transaksi dibatalkan): " + ex.getMessage());
                 }
             } catch (SQLException ex) {
                 ex.printStackTrace();
-                JOptionPane.showMessageDialog(this, 
-                    "Gagal mendapatkan koneksi ke database: " + ex.getMessage(), 
-                    "Error Koneksi", JOptionPane.ERROR_MESSAGE);
+                UIStyle.showErrorMessage(null, "Gagal mendapatkan koneksi ke database: " + ex.getMessage());
             }
         }
     }
