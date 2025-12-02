@@ -12,11 +12,16 @@ The project follows a layered architecture to separate concerns and improve main
     -   `aset`: Asset management UI.
     -   `booking`: Booking and Rental UI.
     -   `laporan`: Reporting UI.
+    -   `monitoring`: Rental monitoring dashboard.
+    -   `playathome`: Play At Home rental UI.
     -   `utama`: Main application shell and navigation.
     -   `util`: UI utilities and styles.
 -   **`service` (Data Access Layer)**: Handles all database interactions.
     -   `AsetDAO`: CRUD operations for assets.
     -   `BookingDAO`: Booking transactions and availability checks.
+    -   `LaporanDAO`: Data retrieval for reports.
+    -   `LoginService`: User authentication logic.
+    -   `MonitoringDAO`: Active rental monitoring queries.
     -   `PlayAtHomeDAO`: Rental transactions and stock management.
 -   **`connection` (Infrastructure)**: Database connection management (`DatabaseConnection`).
 
@@ -37,11 +42,19 @@ The project follows a layered architecture to separate concerns and improve main
 ## Key Features
 -   **Asset Management**: Add, edit, delete, and search assets.
 -   **Booking System**: Real-time availability checking for hourly bookings.
+    -   **VIP Console Selection**: Option to choose specific consoles (PS5/Nintendo) for VIP rooms, with automatic add-on fee calculation.
 -   **Play At Home**: Multi-day rental system with stock management.
--   **Reporting**: View status and category reports.
+-   **Reporting**: Comprehensive reporting including Asset Status and Category distribution.
+-   **Monitoring**: Real-time dashboard for active rentals.
 
 ## Refactoring Notes
 Recent refactoring (Dec 2025) focused on:
--   Extracting database logic from UI classes into DAO classes (`BookingDAO`, `PlayAtHomeDAO`).
--   Implementing `SwingWorker` for responsive UI during database operations.
--   Standardizing code structure and adding Javadoc.
+-   **Architecture**: Extracting database logic from UI classes into DAO classes (`BookingDAO`, `PlayAtHomeDAO`, `AsetDAO`, etc.).
+-   **Performance**: Implementing `SwingWorker` for responsive UI during database operations.
+-   **Code Quality**: Standardizing code structure, adding Javadoc, and cleaning up unused files.
+
+## Contributors
+-   **Project Manager**: Falah Fahrurozi & Maisa Suciyanti
+-   **UI/UX Designer**: Selvia Destri Andani, Dewi Sri Rahayu, & Arief Fachrie Rachman
+-   **DB Developer**: Septio Yasin Tiaratomo
+-   **System Developer**: Falah Fahrurozi
