@@ -7,7 +7,8 @@ import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import javaapplication1.MainFrame;
 import tampilan.util.UIStyle;
-import service.LoginService; // Pastikan import ini ada
+import tampilan.components.RoundedPanel;
+import service.LoginService;
 
 public class TampilanLoginManual extends JPanel {
 
@@ -15,7 +16,7 @@ public class TampilanLoginManual extends JPanel {
     private JPasswordField passwordField;
     private JLabel feedbackLabel;
     private JCheckBox showPasswordCheck;
-    private UIStyle.RoundedPanel formWrapper;
+    private RoundedPanel formWrapper;
 
     public TampilanLoginManual() {
         setLayout(new BorderLayout());
@@ -43,11 +44,11 @@ public class TampilanLoginManual extends JPanel {
         leftPanel.setLayout(new BoxLayout(leftPanel, BoxLayout.Y_AXIS));
         leftPanel.setBorder(BorderFactory.createEmptyBorder(40, 20, 40, 20));
 
-        JLabel logoImage = new JLabel(loadLogo("/img/icon.png", 100, 100));
+        JLabel logoImage = new JLabel(loadLogo("/img/iconloginn.png", 150, 150));
         logoImage.setAlignmentX(Component.CENTER_ALIGNMENT);
         logoImage.setBorder(BorderFactory.createEmptyBorder(0, 0, 20, 0));
 
-        JLabel logoText = new JLabel("BYEBELI EXPERIENCE");
+        JLabel logoText = new JLabel("CONSOLERENT INDONESIA");
         logoText.setFont(UIStyle.fontBold(20));
         logoText.setForeground(Color.WHITE);
         logoText.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -66,7 +67,7 @@ public class TampilanLoginManual extends JPanel {
         leftPanel.add(Box.createVerticalGlue());
 
         // Panel Kanan: Form login dengan rounded dan shadow
-        formWrapper = new UIStyle.RoundedPanel(20);
+        formWrapper = new RoundedPanel(20);
         formWrapper.setBackground(Color.WHITE);
         formWrapper.setLayout(new GridBagLayout());
         formWrapper.setBorder(BorderFactory.createEmptyBorder(40, 40, 40, 40));
@@ -117,50 +118,50 @@ public class TampilanLoginManual extends JPanel {
 
         // Perbaikan tata letak GridBagLayout
         int row = 0;
-        
+
         // Title - mengambil 2 kolom
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = row++;
         formWrapper.add(title, gbc);
-        
+
         // Username label
         gbc.gridwidth = 1;
         gbc.gridx = 0;
         gbc.gridy = row;
         formWrapper.add(userLabel, gbc);
-        
+
         // Username field
         gbc.gridx = 1;
         gbc.gridy = row++;
         formWrapper.add(usernameField, gbc);
-        
+
         // Password label
         gbc.gridx = 0;
         gbc.gridy = row;
         formWrapper.add(passLabel, gbc);
-        
+
         // Password field
         gbc.gridx = 1;
         gbc.gridy = row++;
         formWrapper.add(passwordField, gbc);
-        
+
         // Checkbox - mengambil 2 kolom
         gbc.gridwidth = 2;
         gbc.gridx = 0;
         gbc.gridy = row++;
         formWrapper.add(showPasswordCheck, gbc);
-        
+
         // Feedback label - mengambil 2 kolom
         gbc.gridx = 0;
         gbc.gridy = row++;
         formWrapper.add(feedbackLabel, gbc);
-        
+
         // Login button - mengambil 2 kolom
         gbc.gridx = 0;
         gbc.gridy = row++;
         formWrapper.add(loginButton, gbc);
-        
+
         // Tambahkan glue untuk mengisi ruang kosong
         gbc.weighty = 1.0;
         gbc.gridx = 0;
@@ -170,7 +171,7 @@ public class TampilanLoginManual extends JPanel {
 
         JPanel rightPanel = new JPanel(new GridBagLayout());
         rightPanel.setBackground(UIStyle.BACKGROUND);
-        
+
         GridBagConstraints rightGbc = new GridBagConstraints();
         rightGbc.gridx = 0;
         rightGbc.gridy = 0;
@@ -192,11 +193,11 @@ public class TampilanLoginManual extends JPanel {
         } catch (IOException | IllegalArgumentException e) {
             // Fallback ke ikon default jika gambar tidak ditemukan
             JLabel fallbackIcon = new JLabel("🎮");
-            fallbackIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, width/2));
+            fallbackIcon.setFont(new Font("Segoe UI Emoji", Font.PLAIN, width / 2));
             return new ImageIcon(createImageFromComponent(fallbackIcon, width, height));
         }
     }
-    
+
     private Image createImageFromComponent(JComponent component, int width, int height) {
         component.setSize(width, height);
         component.setPreferredSize(new Dimension(width, height));
@@ -215,47 +216,12 @@ public class TampilanLoginManual extends JPanel {
             feedbackLabel.setForeground(UIStyle.DANGER_COLOR);
             feedbackLabel.setText("Username dan password tidak boleh kosong.");
         } else {
-            boolean loginBerhasil = LoginService.login(user, pass);
-            if (loginBerhasil) {
-                feedbackLabel.setForeground(UIStyle.SUCCESS_COLOR);
-                feedbackLabel.setText("Login berhasil! Mengalihkan...");
-                
-                // Disable inputs selama redirect
-                usernameField.setEnabled(false);
-                passwordField.setEnabled(false);
-                showPasswordCheck.setEnabled(false);
-                
-                Timer timer = new Timer(1000, e -> MainFrame.showPage("home"));
-                timer.setRepeats(false);
-                timer.start();
+            if (LoginService.login(user, pass)) {
+                MainFrame.showPage("home");
             } else {
                 feedbackLabel.setForeground(UIStyle.DANGER_COLOR);
                 feedbackLabel.setText("Username atau password salah.");
-                
-                // Shake animation untuk feedback visual
-                animateShake(formWrapper);
             }
         }
-    }
-    
-    private void animateShake(JComponent component) {
-        int originalX = component.getX();
-        int shakeDelta = 5;
-        
-        Timer shakeTimer = new Timer(50, null);
-        shakeTimer.setRepeats(true);
-        final int[] count = {0};
-        
-        shakeTimer.addActionListener(e -> {
-            if (count[0] < 6) {
-                component.setLocation(originalX + (count[0] % 2 == 0 ? shakeDelta : -shakeDelta), component.getY());
-                count[0]++;
-            } else {
-                component.setLocation(originalX, component.getY());
-                shakeTimer.stop();
-            }
-        });
-        
-        shakeTimer.start();
     }
 }

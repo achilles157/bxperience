@@ -5,10 +5,12 @@ import java.awt.*;
 import tampilan.util.UIStyle;
 import tampilan.util.UIStyle.HoverLabel;
 import tampilan.booking.BookingManual;
-import tampilan.booking.PlayAtHomeManual;
+import tampilan.playathome.PlayAtHomeManual;
+import tampilan.components.RoundedPanel;
 import tampilan.aset.AsetControl;
 import tampilan.aset.AsetManajemenPanel;
 import tampilan.monitoring.MonitoringPanel;
+import tampilan.laporan.LaporanContainerPanel;
 
 public class SidebarShell extends JPanel {
 
@@ -19,7 +21,7 @@ public class SidebarShell extends JPanel {
         setBackground(UIStyle.BACKGROUND);
 
         // Sidebar panel dengan efek shadow
-        UIStyle.RoundedPanel sidebar = new UIStyle.RoundedPanel(0, false);
+        RoundedPanel sidebar = new RoundedPanel(0, false);
         sidebar.setLayout(new BoxLayout(sidebar, BoxLayout.Y_AXIS));
         sidebar.setBackground(UIStyle.PRIMARY);
         sidebar.setPreferredSize(new Dimension(220, getHeight()));
@@ -29,17 +31,18 @@ public class SidebarShell extends JPanel {
         JPanel logoPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 0, 0));
         logoPanel.setOpaque(false);
         logoPanel.setBorder(BorderFactory.createEmptyBorder(0, 0, 25, 0));
-        
-        JLabel logo = new JLabel("BYEBELI");
+
+        JLabel logo = new JLabel("Consolerent ID");
         logo.setFont(UIStyle.fontBold(20));
         logo.setForeground(Color.WHITE);
         logoPanel.add(logo);
-        
+
         sidebar.add(logoPanel);
 
         // Menu items
-        String[] menu = {"Home", "Booking", "Play At Home", "Aset Control", "Manajemen Aset", "Monitoring", "Logout"};
-        
+        String[] menu = { "Home", "Booking", "Play At Home", "Aset Control", "Manajemen Aset", "Monitoring", "Laporan",
+                "Logout" };
+
         for (String item : menu) {
             HoverLabel label = new HoverLabel(item);
             label.setFont(UIStyle.fontMedium(14));
@@ -67,10 +70,15 @@ public class SidebarShell extends JPanel {
                             javaapplication1.MainFrame.setPage(new SidebarShell(new AsetControl()), "aset");
                             break;
                         case "Manajemen Aset":
-                            javaapplication1.MainFrame.setPage(new SidebarShell(new AsetManajemenPanel()), "manajemenaset");
+                            javaapplication1.MainFrame.setPage(new SidebarShell(new AsetManajemenPanel()),
+                                    "manajemenaset");
                             break;
                         case "Monitoring":
                             javaapplication1.MainFrame.setPage(new SidebarShell(new MonitoringPanel()), "monitoring");
+                            break;
+                        case "Laporan":
+                            javaapplication1.MainFrame.setPage(new SidebarShell(new LaporanContainerPanel()),
+                                    "laporan");
                             break;
                         case "Logout":
                             javaapplication1.MainFrame.showPage("login");
@@ -78,7 +86,7 @@ public class SidebarShell extends JPanel {
                     }
                 }
             });
-            
+
             sidebar.add(Box.createVerticalStrut(5));
             sidebar.add(label);
         }

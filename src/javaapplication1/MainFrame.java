@@ -4,11 +4,12 @@ import javax.swing.*;
 import tampilan.utama.TampilanLoginManual;
 import tampilan.utama.TampilanHomeManual;
 import tampilan.booking.BookingManual;
-import tampilan.booking.PlayAtHomeManual;
+import tampilan.playathome.PlayAtHomeManual;
 import tampilan.aset.AsetControl;
 import tampilan.aset.AsetManajemenPanel;
 import tampilan.utama.SidebarShell;
 import tampilan.monitoring.MonitoringPanel;
+import tampilan.laporan.LaporanContainerPanel;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
@@ -22,12 +23,11 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame() {
-        setTitle("Byebeli Experience");
+        setTitle("Consolerent Indonesia");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 768);
         setLocationRelativeTo(null);
 
-        // Tambahkan semua tampilan sebagai panel
         mainPanel.add(new TampilanLoginManual(), "login");
         mainPanel.add(new TampilanHomeManual(), "home");
         mainPanel.add(new SidebarShell(new TampilanHomeManual()), "home");
@@ -36,6 +36,7 @@ public class MainFrame extends JFrame {
         mainPanel.add(new SidebarShell(new AsetControl()), "aset");
         mainPanel.add(new SidebarShell(new AsetManajemenPanel()), "manajemenaset");
         mainPanel.add(new SidebarShell(new MonitoringPanel()), "monitoringpanel");
+        mainPanel.add(new SidebarShell(new LaporanContainerPanel()), "laporan");
 
         add(mainPanel);
         cardLayout.show(mainPanel, "login");
@@ -50,4 +51,4 @@ public class MainFrame extends JFrame {
             new MainFrame().setVisible(true);
         });
     }
-} 
+}
