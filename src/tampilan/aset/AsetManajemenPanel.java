@@ -197,25 +197,10 @@ public class AsetManajemenPanel extends JPanel {
     }
 
     private void saveChanges() {
+        if (asetTable.isEditing()) {
+            asetTable.getCellEditor().stopCellEditing();
+        }
 
-        // If no rows selected, we might want to save ALL rows if they were edited,
-        // but for now let's assume we save everything since we don't track dirty state
-        // per row easily here
-        // Actually, the original logic only saved selected rows? No, it got selected
-        // rows but that seems wrong for "Save" after edit mode where you might edit
-        // anything.
-        // Let's assume we want to save ALL rows that might have changed.
-        // But to be safe and efficient, let's just save all rows in the model for now,
-        // or revert to original logic if it made sense.
-        // Original logic: int[] selectedRows = asetTable.getSelectedRows();
-        // But wait, toggleEditMode disables row selection! So selectedRows will be
-        // empty!
-        // The original code had a bug or I misunderstood.
-        // Ah, toggleEditMode enables selection back BEFORE calling saveChanges.
-        // But users might not select rows to save. They expect "Save" to save
-        // everything.
-
-        // Let's change strategy: Save ALL rows.
         int rowCount = model.getRowCount();
         if (rowCount == 0)
             return;
@@ -223,9 +208,38 @@ public class AsetManajemenPanel extends JPanel {
         List<Object[]> updates = new ArrayList<>();
         for (int i = 0; i < rowCount; i++) {
             Object[] rowData = new Object[9];
-            for (int j = 0; j < 9; j++) {
-                rowData[j] = model.getValueAt(i, j);
+            rowData[0] = model.getValueAt(i, 0); // ID
+            rowData[1] = model.getValueAt(i, 1); // Nama
+            rowData[2] = model.getValueAt(i, 2); // Kode
+            rowData[3] = model.getValueAt(i, 3); // Kategori
+            rowData[4] = model.getValueAt(i, 4); // Deskripsi
+
+            // Handle potential String/Double mismatch for prices
+            Object hargaMenitObj = model.getValueAt(i, 5);
+            if (hargaMenitObj instanceof String) {
+                try {
+                    rowData[5] = Double.parseDouble((String) hargaMenitObj);
+                } catch (NumberFormatException e) {
+                    rowData[5] = 0.0; // Default or handle error
+                }
+            } else {
+                rowData[5] = hargaMenitObj;
             }
+
+            Object hargaHariObj = model.getValueAt(i, 6);
+            if (hargaHariObj instanceof String) {
+                try {
+                    rowData[6] = Double.parseDouble((String) hargaHariObj);
+                } catch (NumberFormatException e) {
+                    rowData[6] = 0.0;
+                }
+            } else {
+                rowData[6] = hargaHariObj;
+            }
+
+            rowData[7] = model.getValueAt(i, 7); // Tersedia (Boolean)
+            rowData[8] = model.getValueAt(i, 8); // Disewakan (Boolean)
+
             updates.add(rowData);
         }
 

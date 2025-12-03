@@ -151,10 +151,11 @@ public class PlayAtHomeDAO {
      * @return true if successful
      * @throws SQLException if a database error occurs
      */
-    public boolean createRental(String nama, String lokasi, String instagram, java.sql.Date tglMulai,
+    public boolean createRental(String nama, String alamatLengkap, String noTelp, java.sql.Date tglMulai,
             java.sql.Date tglSelesai,
             String metode, String alamatAntar, String alamatKembali, String keperluan,
-            double ongkir, double totalHarga, List<RentalItem> items) throws SQLException {
+            String namaKurir, String noTelpKurir,
+            double ongkir, double diskon, double totalHarga, List<RentalItem> items) throws SQLException {
 
         Connection conn = null;
         try {
@@ -162,21 +163,24 @@ public class PlayAtHomeDAO {
             conn.setAutoCommit(false);
 
             // 1. Insert Header
-            String insertPlayHome = "INSERT INTO playathome (nama, lokasi, instagram, tgl_mulai, tgl_selesai, metode_pengambilan, alamat_antar, alamat_kembali, keperluan, ongkir, total_harga, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aktif')";
+            String insertPlayHome = "INSERT INTO playathome (nama, alamat_lengkap, no_telp, tgl_mulai, tgl_selesai, metode_pengambilan, alamat_antar, alamat_kembali, keperluan, nama_kurir, no_telp_kurir, ongkir, diskon, total_harga, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'aktif')";
             int idPlayhome = 0;
 
             try (PreparedStatement pst = conn.prepareStatement(insertPlayHome, Statement.RETURN_GENERATED_KEYS)) {
                 pst.setString(1, nama);
-                pst.setString(2, lokasi);
-                pst.setString(3, instagram);
+                pst.setString(2, alamatLengkap);
+                pst.setString(3, noTelp);
                 pst.setDate(4, tglMulai);
                 pst.setDate(5, tglSelesai);
                 pst.setString(6, metode);
                 pst.setString(7, alamatAntar);
                 pst.setString(8, alamatKembali);
                 pst.setString(9, keperluan);
-                pst.setDouble(10, ongkir);
-                pst.setDouble(11, totalHarga);
+                pst.setString(10, namaKurir);
+                pst.setString(11, noTelpKurir);
+                pst.setDouble(12, ongkir);
+                pst.setDouble(13, diskon);
+                pst.setDouble(14, totalHarga);
                 pst.executeUpdate();
 
                 ResultSet generatedKeys = pst.getGeneratedKeys();

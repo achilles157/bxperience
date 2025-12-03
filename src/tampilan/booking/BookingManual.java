@@ -19,7 +19,7 @@ import service.BookingDAO;
  */
 public class BookingManual extends JPanel {
     private BookingFormPanel formPanel;
-    private RoundedTextField priceField, totalField;
+    private RoundedTextField priceField, diskonField, totalField;
     private BookingDAO bookingDAO;
 
     /**
@@ -126,11 +126,13 @@ public class BookingManual extends JPanel {
 
         priceField = new RoundedTextField();
         priceField.setEditable(false);
+        diskonField = new RoundedTextField();
         totalField = new RoundedTextField();
         totalField.setEditable(false);
 
         addField(panel, "Harga per Menit:", priceField, gbc, 1);
-        addField(panel, "Total Harga:", totalField, gbc, 2);
+        addField(panel, "Diskon (%):", diskonField, gbc, 2);
+        addField(panel, "Total Harga:", totalField, gbc, 3);
     }
 
     /**
@@ -211,6 +213,20 @@ public class BookingManual extends JPanel {
         });
 
         formPanel.addConsoleListener(e -> calculatePrice());
+
+        diskonField.getDocument().addDocumentListener(new DocumentListener() {
+            public void changedUpdate(DocumentEvent e) {
+                calculatePrice();
+            }
+
+            public void insertUpdate(DocumentEvent e) {
+                calculatePrice();
+            }
+
+            public void removeUpdate(DocumentEvent e) {
+                calculatePrice();
+            }
+        });
     }
 
     /**
@@ -332,8 +348,23 @@ public class BookingManual extends JPanel {
                             total += (15000 * quantity);
                         }
 
+                        double diskonPersen = 0;
+                        try {
+                            if (!diskonField.getText().isEmpty())
+                                diskonPersen = Double.parseDouble(diskonField.getText());
+                        } catch (NumberFormatException e) {
+                        }
+
+                        // Validate percentage
+                        if (diskonPersen < 0)
+                            diskonPersen = 0;
+                        if (diskonPersen > 100)
+                            diskonPersen = 100;
+
+                        double diskonNominal = total * (diskonPersen / 100.0);
+
                         priceField.setText(UIStyle.formatCurrency(pricePerMinute));
-                        totalField.setText(UIStyle.formatCurrency(total));
+                        totalField.setText(UIStyle.formatCurrency(total - diskonNominal));
                     } catch (Exception e) {
                         e.printStackTrace();
                     }
@@ -375,11 +406,35 @@ public class BookingManual extends JPanel {
             int quantity = Integer.parseInt(formPanel.getJumlah());
             boolean extraConsole = formPanel.isPS5Selected() && formPanel.isNintendoSelected();
 
+            double diskonPersenValue = 0;
+            try {
+                if (!diskonField.getText().isEmpty())
+                    diskonPersenValue = Double.parseDouble(diskonField.getText());
+            } catch (NumberFormatException e) {
+            }
+            if (diskonPersenValue < 0)
+                diskonPersenValue = 0;
+            if (diskonPersenValue > 100)
+                diskonPersenValue = 100;
+
+            final double finalDiskonPersen = diskonPersenValue;
+
             new SwingWorker<Boolean, Void>() {
                 @Override
                 protected Boolean doInBackground() throws Exception {
+                    // 1. Get Price
+                    double pricePerMinute = bookingDAO.getPricePerMinute(category);
+                    double total = Math.ceil(pricePerMinute * duration * quantity);
+                    if (extraConsole) {
+                        total += (15000 * quantity);
+                    }
+
+                    // 2. Calculate Discount Nominal
+                    double diskonNominal = total * (finalDiskonPersen / 100.0);
+
+                    // 3. Create Booking with Nominal Discount
                     return bookingDAO.createBooking(nama, noHp, date, time, duration,
-                            category, quantity, extraConsole);
+                            category, quantity, extraConsole, diskonNominal);
                 }
 
                 @Override
@@ -389,6 +444,7 @@ public class BookingManual extends JPanel {
                             UIStyle.showSuccessMessage(BookingManual.this, "Booking berhasil dibuat!");
                             formPanel.reset();
                             priceField.setText("");
+                            diskonField.setText("");
                             totalField.setText("");
                             loadCategoriesByArea(); // Reload categories after booking
                         } else {

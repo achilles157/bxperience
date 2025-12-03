@@ -7,10 +7,11 @@ import tampilan.components.*;
 import tampilan.util.UIStyle;
 
 public class PlayAtHomeFormPanel extends RoundedPanel {
-    private RoundedTextField lokasiField, namaField, instagramField;
+    private RoundedTextField alamatLengkapField, namaField, noTelpField;
     private JDateChooser dariDate, sampaiDate;
     private RoundedComboBox<String> metodeCombo;
     private RoundedTextField alamatAntarField, alamatKembaliField, keperluanField;
+    private RoundedTextField namaKurirField, noTelpKurirField;
 
     public PlayAtHomeFormPanel() {
         super(25);
@@ -30,13 +31,13 @@ public class PlayAtHomeFormPanel extends RoundedPanel {
 
         addSectionTitle("Informasi Penyewa", gbc, row++);
 
-        lokasiField = new RoundedTextField();
+        alamatLengkapField = new RoundedTextField();
         namaField = new RoundedTextField();
-        instagramField = new RoundedTextField();
+        noTelpField = new RoundedTextField();
 
-        addField("Lokasi:", lokasiField, gbc, row++);
+        addField("Alamat Lengkap:", alamatLengkapField, gbc, row++);
         addField("Nama Penyewa:", namaField, gbc, row++);
-        addField("Akun Instagram:", instagramField, gbc, row++);
+        addField("No. Telp:", noTelpField, gbc, row++);
 
         addSectionTitle("Detail Penyewaan", gbc, row++);
 
@@ -56,6 +57,14 @@ public class PlayAtHomeFormPanel extends RoundedPanel {
         addField("Alamat Antar:", alamatAntarField, gbc, row++);
         addField("Alamat Kembali:", alamatKembaliField, gbc, row++);
         addField("Keperluan:", keperluanField, gbc, row++);
+
+        addSectionTitle("Informasi Kurir", gbc, row++);
+
+        namaKurirField = new RoundedTextField();
+        noTelpKurirField = new RoundedTextField();
+
+        addField("Nama Kurir:", namaKurirField, gbc, row++);
+        addField("No. Telp Kurir:", noTelpKurirField, gbc, row++);
     }
 
     private void addSectionTitle(String title, GridBagConstraints gbc, int row) {
@@ -82,16 +91,16 @@ public class PlayAtHomeFormPanel extends RoundedPanel {
         add(field, gbc);
     }
 
-    public String getLokasi() {
-        return lokasiField.getText();
+    public String getAlamatLengkap() {
+        return alamatLengkapField.getText();
     }
 
     public String getNama() {
         return namaField.getText();
     }
 
-    public String getInstagram() {
-        return instagramField.getText();
+    public String getNoTelp() {
+        return noTelpField.getText();
     }
 
     public java.util.Date getDariDate() {
@@ -118,20 +127,30 @@ public class PlayAtHomeFormPanel extends RoundedPanel {
         return keperluanField.getText();
     }
 
+    public String getNamaKurir() {
+        return namaKurirField.getText();
+    }
+
+    public String getNoTelpKurir() {
+        return noTelpKurirField.getText();
+    }
+
     public void addDateChangeListener(java.beans.PropertyChangeListener listener) {
         dariDate.addPropertyChangeListener("date", listener);
         sampaiDate.addPropertyChangeListener("date", listener);
     }
 
     public void reset() {
-        lokasiField.setText("");
+        alamatLengkapField.setText("");
         namaField.setText("");
-        instagramField.setText("");
+        noTelpField.setText("");
         dariDate.setDate(null);
         sampaiDate.setDate(null);
         metodeCombo.setSelectedIndex(0);
         alamatAntarField.setText("");
         alamatKembaliField.setText("");
         keperluanField.setText("");
+        namaKurirField.setText("");
+        noTelpKurirField.setText("");
     }
 }

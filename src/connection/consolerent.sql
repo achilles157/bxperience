@@ -56,6 +56,7 @@ CREATE TABLE `booking` (
   `jam` time DEFAULT NULL,
   `durasi_menit` int(11) DEFAULT NULL,
   `total_harga` decimal(10,2) DEFAULT NULL,
+  `diskon` decimal(10,2) DEFAULT 0.00,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `status` enum('pending','confirmed','completed','cancelled') DEFAULT 'pending'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -97,15 +98,18 @@ CREATE TABLE `daily_revenue` (
 CREATE TABLE `playathome` (
   `id_playhome` int(11) NOT NULL,
   `nama` varchar(100) DEFAULT NULL,
-  `lokasi` varchar(100) DEFAULT NULL,
-  `instagram` varchar(100) DEFAULT NULL,
+  `alamat_lengkap` text DEFAULT NULL,
+  `no_telp` varchar(20) DEFAULT NULL,
   `tgl_mulai` date DEFAULT NULL,
   `tgl_selesai` date DEFAULT NULL,
   `metode_pengambilan` varchar(20) DEFAULT NULL,
   `alamat_antar` text DEFAULT NULL,
   `alamat_kembali` text DEFAULT NULL,
   `keperluan` text DEFAULT NULL,
+  `nama_kurir` varchar(100) DEFAULT NULL,
+  `no_telp_kurir` varchar(20) DEFAULT NULL,
   `ongkir` decimal(10,2) DEFAULT NULL,
+  `diskon` decimal(10,2) DEFAULT 0.00,
   `total_harga` decimal(10,2) DEFAULT NULL,
   `status` enum('aktif','selesai') DEFAULT 'aktif'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;

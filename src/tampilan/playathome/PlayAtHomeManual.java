@@ -13,7 +13,7 @@ import service.PlayAtHomeDAO;
 public class PlayAtHomeManual extends JPanel {
     private PlayAtHomeFormPanel formPanel;
     private PlayAtHomeItemPanel itemPanel;
-    private RoundedTextField hargaField, ongkirField, totalField;
+    private RoundedTextField hargaField, ongkirField, diskonField, totalField;
     private PlayAtHomeDAO playAtHomeDAO;
 
     public PlayAtHomeManual() {
@@ -85,7 +85,7 @@ public class PlayAtHomeManual extends JPanel {
         formPanel.addDateChangeListener(evt -> calculateTotal());
         itemPanel.setOnTableChangeListener(this::calculateTotal);
 
-        ongkirField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+        javax.swing.event.DocumentListener calcListener = new javax.swing.event.DocumentListener() {
             public void changedUpdate(javax.swing.event.DocumentEvent e) {
                 calculateTotal();
             }
@@ -97,7 +97,10 @@ public class PlayAtHomeManual extends JPanel {
             public void removeUpdate(javax.swing.event.DocumentEvent e) {
                 calculateTotal();
             }
-        });
+        };
+
+        ongkirField.getDocument().addDocumentListener(calcListener);
+        diskonField.getDocument().addDocumentListener(calcListener);
     }
 
     private void initPaymentPanel(JPanel panel) {
@@ -119,12 +122,14 @@ public class PlayAtHomeManual extends JPanel {
         hargaField = new RoundedTextField();
         hargaField.setEditable(false);
         ongkirField = new RoundedTextField();
+        diskonField = new RoundedTextField();
         totalField = new RoundedTextField();
         totalField.setEditable(false);
 
         addField(panel, "Harga Sewa:", hargaField, gbc, 1);
         addField(panel, "Ongkir:", ongkirField, gbc, 2);
-        addField(panel, "Total:", totalField, gbc, 3);
+        addField(panel, "Diskon:", diskonField, gbc, 3);
+        addField(panel, "Total:", totalField, gbc, 4);
     }
 
     private void addField(JPanel panel, String labelText, Component field, GridBagConstraints gbc, int row) {
@@ -159,11 +164,18 @@ public class PlayAtHomeManual extends JPanel {
         } catch (NumberFormatException e) {
         }
 
-        totalField.setText(String.valueOf(itemTotal + ongkir));
+        double diskon = 0;
+        try {
+            if (!diskonField.getText().isEmpty())
+                diskon = Double.parseDouble(diskonField.getText());
+        } catch (NumberFormatException e) {
+        }
+
+        totalField.setText(String.valueOf(itemTotal + ongkir - diskon));
     }
 
     private void submitTransaction() {
-        if (formPanel.getNama().isEmpty() || formPanel.getLokasi().isEmpty() ||
+        if (formPanel.getNama().isEmpty() || formPanel.getAlamatLengkap().isEmpty() ||
                 formPanel.getDariDate() == null || formPanel.getSampaiDate() == null ||
                 itemPanel.getItems().isEmpty()) {
             UIStyle.showErrorMessage(this, "Harap lengkapi semua data.");
@@ -172,14 +184,16 @@ public class PlayAtHomeManual extends JPanel {
 
         List<PlayAtHomeDAO.RentalItem> items = itemPanel.getItems();
         String nama = formPanel.getNama();
-        String lokasi = formPanel.getLokasi();
-        String instagram = formPanel.getInstagram();
+        String alamatLengkap = formPanel.getAlamatLengkap();
+        String noTelp = formPanel.getNoTelp();
         java.sql.Date tglMulai = new java.sql.Date(formPanel.getDariDate().getTime());
         java.sql.Date tglSelesai = new java.sql.Date(formPanel.getSampaiDate().getTime());
         String metode = formPanel.getMetode();
         String alamatAntar = formPanel.getAlamatAntar();
         String alamatKembali = formPanel.getAlamatKembali();
         String keperluan = formPanel.getKeperluan();
+        String namaKurir = formPanel.getNamaKurir();
+        String noTelpKurir = formPanel.getNoTelpKurir();
 
         double ongkirValue = 0;
         try {
@@ -188,13 +202,23 @@ public class PlayAtHomeManual extends JPanel {
         } catch (NumberFormatException e) {
         }
         final double finalOngkir = ongkirValue;
+
+        double diskonValue = 0;
+        try {
+            if (!diskonField.getText().isEmpty())
+                diskonValue = Double.parseDouble(diskonField.getText());
+        } catch (NumberFormatException e) {
+        }
+        final double finalDiskon = diskonValue;
+
         final double finalTotal = Double.parseDouble(totalField.getText());
 
         new SwingWorker<Boolean, Void>() {
             @Override
             protected Boolean doInBackground() throws Exception {
-                return playAtHomeDAO.createRental(nama, lokasi, instagram, tglMulai, tglSelesai,
-                        metode, alamatAntar, alamatKembali, keperluan, finalOngkir, finalTotal, items);
+                return playAtHomeDAO.createRental(nama, alamatLengkap, noTelp, tglMulai, tglSelesai,
+                        metode, alamatAntar, alamatKembali, keperluan, namaKurir, noTelpKurir, finalOngkir, finalDiskon,
+                        finalTotal, items);
             }
 
             @Override
@@ -206,6 +230,7 @@ public class PlayAtHomeManual extends JPanel {
                         itemPanel.reset();
                         hargaField.setText("");
                         ongkirField.setText("");
+                        diskonField.setText("");
                         totalField.setText("");
                     }
                 } catch (Exception e) {

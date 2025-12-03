@@ -50,7 +50,7 @@ public class BookingDAO {
      */
     public List<String> getAllCategoriesByArea(String area) throws SQLException {
         List<String> categories = new ArrayList<>();
-        String query = "SELECT DISTINCT kategori FROM aset WHERE status_disewakan = 1 AND kategori LIKE ? ORDER BY kategori";
+        String query = "SELECT DISTINCT kategori FROM aset WHERE kategori LIKE ? ORDER BY kategori";
         String param = area.equalsIgnoreCase("VIP Room") ? "%VIP%" : "%";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -92,7 +92,7 @@ public class BookingDAO {
             throws SQLException {
         List<String> availableCategories = new ArrayList<>();
         String query = "SELECT DISTINCT a.kategori FROM aset a " +
-                "WHERE a.status_disewakan = 1 " +
+                "WHERE a.status_tersedia = 1 " +
                 "AND a.id_aset NOT IN (" +
                 "    SELECT bd.id_aset " +
                 "    FROM booking b " +
@@ -155,7 +155,7 @@ public class BookingDAO {
     public int checkAvailabilityCount(String category, java.sql.Date date, String time, int durationMinutes)
             throws SQLException {
         String query = "SELECT COUNT(*) as available FROM aset a " +
-                "WHERE a.kategori = ? AND a.status_disewakan = 1 " +
+                "WHERE a.kategori = ? AND a.status_tersedia = 1 " +
                 "AND NOT EXISTS (" +
                 "  SELECT 1 FROM booking b " +
                 "  JOIN booking_detail bd ON b.id_booking = bd.id_booking " +
@@ -210,7 +210,7 @@ public class BookingDAO {
      */
     public boolean createBooking(String nama, String noHp,
             java.sql.Date date, String time, int durationMinutes,
-            String category, int quantity, boolean extraConsole) throws SQLException {
+            String category, int quantity, boolean extraConsole, double diskon) throws SQLException {
 
         Connection conn = null;
         try {
@@ -218,7 +218,7 @@ public class BookingDAO {
             conn.setAutoCommit(false);
 
             String checkQuery = "SELECT COUNT(*) as available FROM aset a " +
-                    "WHERE a.kategori = ? AND a.status_disewakan = 1 " +
+                    "WHERE a.kategori = ? AND a.status_tersedia = 1 " +
                     "AND NOT EXISTS (" +
                     "  SELECT 1 FROM booking b " +
                     "  JOIN booking_detail bd ON b.id_booking = bd.id_booking " +
@@ -261,9 +261,14 @@ public class BookingDAO {
                 totalHarga += (15000 * quantity);
             }
 
-            String insertBooking = "INSERT INTO booking (nama, no_hp, tanggal, jam, durasi_menit, total_harga, status) "
+            // Apply discount
+            totalHarga -= diskon;
+            if (totalHarga < 0)
+                totalHarga = 0;
+
+            String insertBooking = "INSERT INTO booking (nama, no_hp, tanggal, jam, durasi_menit, total_harga, diskon, status) "
                     +
-                    "VALUES (?, ?, ?, ?, ?, ?, 'confirmed')";
+                    "VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed')";
 
             int bookingId = 0;
             try (PreparedStatement pstBooking = conn.prepareStatement(insertBooking, Statement.RETURN_GENERATED_KEYS)) {
@@ -273,6 +278,7 @@ public class BookingDAO {
                 pstBooking.setString(4, time);
                 pstBooking.setInt(5, durationMinutes);
                 pstBooking.setDouble(6, totalHarga);
+                pstBooking.setDouble(7, diskon);
                 pstBooking.executeUpdate();
 
                 ResultSet generatedKeys = pstBooking.getGeneratedKeys();
@@ -282,7 +288,7 @@ public class BookingDAO {
             }
 
             String getAssetsQuery = "SELECT a.id_aset FROM aset a " +
-                    "WHERE a.kategori = ? AND a.status_disewakan = 1 " +
+                    "WHERE a.kategori = ? AND a.status_tersedia = 1 " +
                     "AND NOT EXISTS (" +
                     "  SELECT 1 FROM booking b " +
                     "  JOIN booking_detail bd ON b.id_booking = bd.id_booking " +
@@ -296,9 +302,11 @@ public class BookingDAO {
                     ") LIMIT ?";
 
             String insertDetail = "INSERT INTO booking_detail (id_booking, id_aset, jumlah, add_on, subtotal) VALUES (?, ?, 1, ?, ?)";
+            String updateAssetStatus = "UPDATE aset SET status_tersedia = 0 WHERE id_aset = ?";
 
             try (PreparedStatement pstAssets = conn.prepareStatement(getAssetsQuery);
-                    PreparedStatement pstDetail = conn.prepareStatement(insertDetail)) {
+                    PreparedStatement pstDetail = conn.prepareStatement(insertDetail);
+                    PreparedStatement pstUpdateStatus = conn.prepareStatement(updateAssetStatus)) {
 
                 pstAssets.setString(1, category);
                 pstAssets.setDate(2, date);
@@ -327,8 +335,13 @@ public class BookingDAO {
                     pstDetail.setDouble(4, subtotal);
 
                     pstDetail.addBatch();
+
+                    // Update asset status
+                    pstUpdateStatus.setString(1, assetId);
+                    pstUpdateStatus.addBatch();
                 }
                 pstDetail.executeBatch();
+                pstUpdateStatus.executeBatch();
             }
 
             conn.commit();

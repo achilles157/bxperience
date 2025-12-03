@@ -38,3 +38,9 @@ bin/
 
 # Logs
 *.log
+
+# Generated artifacts
+*.exe
+*.jar
+*.ico
+convert_icon.ps1
