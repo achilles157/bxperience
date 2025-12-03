@@ -10,6 +10,13 @@ import javax.swing.table.DefaultTableModel;
 
 public class MonitoringDAO {
 
+    /**
+     * Mengambil ringkasan data untuk dashboard monitoring.
+     *
+     * @return Array integer berisi [jumlah_tersedia, jumlah_disewa,
+     *         jumlah_booking].
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public int[] getSummaryData() throws SQLException {
         int[] summary = new int[3]; // 0: tersedia, 1: disewa, 2: booking
 
@@ -43,6 +50,15 @@ public class MonitoringDAO {
         return summary;
     }
 
+    /**
+     * Mengambil data booking dan rental aktif untuk ditampilkan di tabel
+     * monitoring.
+     * Menggabungkan data dari tabel Booking dan PlayAtHome.
+     *
+     * @return DefaultTableModel berisi data gabungan (ID, Nama, Item, Tanggal, Jam,
+     *         Durasi, Status, Aksi).
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public DefaultTableModel getBookingData() throws SQLException {
         String[] columns = { "ID Booking", "Nama Pelanggan", "Item", "Tanggal", "Jam", "Durasi", "Status", "Aksi" };
         DefaultTableModel model = new DefaultTableModel(columns, 0);
@@ -95,6 +111,16 @@ public class MonitoringDAO {
         return model;
     }
 
+    /**
+     * Memproses pengembalian item (selesai sewa).
+     * Mengupdate status booking/rental menjadi selesai dan mengembalikan status
+     * aset menjadi tersedia.
+     *
+     * @param idTransaksi ID transaksi gabungan (format: "Jenis-ID", misal
+     *                    "Booking-123").
+     * @throws SQLException             jika terjadi kesalahan database.
+     * @throws IllegalArgumentException jika format ID transaksi tidak valid.
+     */
     public void kembalikanItem(String idTransaksi) throws SQLException, IllegalArgumentException {
         try (Connection conn = DatabaseConnection.getConnection()) {
             conn.setAutoCommit(false);

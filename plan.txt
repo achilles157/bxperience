@@ -1,6 +1,6 @@
 Tentu, saya akan bantu membuat rencana optimalisasi untuk aplikasi Anda.
 
-### **Rencana Optimalisasi Aplikasi Byebeli Experience**
+### **Rencana Optimalisasi Aplikasi Consolerent**
 
 Berikut adalah rencana untuk mengoptimalkan aplikasi Anda dari segi performa, tampilan (UI/UX), efisiensi kode, serta penambahan fitur laporan transaksi.
 
@@ -75,3 +75,8 @@ Ya, aplikasi Anda sudah memiliki **5 master data** berdasarkan skema database `b
 5.  **Kategori Aset**: Meskipun tidak ada tabel terpisah, daftar kategori yang Anda gunakan di `AsetControl.java` (`PC GAMING`, `RACING SIMULATOR`, dll.) berfungsi sebagai master data kategori.
 
 Dengan menerapkan rencana di atas, aplikasi Anda akan menjadi lebih cepat, lebih ramah pengguna, dan lebih mudah untuk dikelola dan dikembangkan di masa depan.
+
+revisi bagian playathome yakni akun instagram diganti no telp, lokasi menjadi alamat lengkap
+kemudian tambahkan bagian form kurir di playathome
+logika pengeditan data nya tidak berfungsi di manajemen aset
+tambahkan form dan logika diskon di booking dan playathome

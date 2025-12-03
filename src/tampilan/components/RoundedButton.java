@@ -7,10 +7,20 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import tampilan.util.UIStyle;
 
+/**
+ * Komponen tombol kustom dengan sudut membulat (rounded corners).
+ * Memiliki efek hover dan styling modern.
+ */
 public class RoundedButton extends JButton {
     private final int radius;
     private Color hoverBackground = UIStyle.PRIMARY_LIGHT;
 
+    /**
+     * Membuat tombol rounded baru.
+     *
+     * @param text   Teks tombol.
+     * @param radius Radius sudut tombol.
+     */
     public RoundedButton(String text, int radius) {
         super(text);
         this.radius = radius;

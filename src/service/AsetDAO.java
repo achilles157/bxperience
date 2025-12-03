@@ -202,6 +202,12 @@ public class AsetDAO {
         return model;
     }
 
+    /**
+     * Menghasilkan ID Aset berikutnya secara otomatis.
+     * Format ID: ASTxxx (contoh: AST001, AST002).
+     *
+     * @return String ID Aset baru.
+     */
     public String generateNextIdAset() {
         String prefix = "AST";
         int counter = 1;
@@ -224,6 +230,13 @@ public class AsetDAO {
         return prefix + String.format("%03d", counter);
     }
 
+    /**
+     * Menghasilkan Kode Barang berikutnya berdasarkan kategori.
+     * Format Kode: [PREFIX]xxx (contoh: PS3001, TV40005).
+     *
+     * @param kategori Kategori aset untuk menentukan prefix.
+     * @return String Kode Barang baru.
+     */
     public String generateNextKodeBarang(String kategori) {
         String prefix = generateKodeBarang(kategori);
         int nextNumber = 1;
@@ -248,6 +261,17 @@ public class AsetDAO {
         return prefix + String.format("%03d", nextNumber);
     }
 
+    /**
+     * Mengambil nomor urut terakhir dari database untuk kolom tertentu.
+     * Digunakan untuk generate ID atau Kode otomatis.
+     *
+     * @param conn       Koneksi database.
+     * @param columnName Nama kolom yang akan dicek (misal: id_aset atau
+     *                   kode_barang).
+     * @param prefix     Prefix yang digunakan untuk filter (misal: AST atau PS3).
+     * @return Integer nomor urut terakhir yang ditemukan, atau 0 jika belum ada.
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     private int getLastNumberFromDb(Connection conn, String columnName, String prefix) throws SQLException {
         int lastNumber = 0;
         String query = "SELECT " + columnName + " FROM aset WHERE " + columnName + " LIKE ? ORDER BY " + columnName
@@ -268,6 +292,12 @@ public class AsetDAO {
         return lastNumber;
     }
 
+    /**
+     * Menentukan prefix kode barang berdasarkan kategori.
+     *
+     * @param kategori Nama kategori aset.
+     * @return String prefix kode barang (misal: PS3, PS4, TV29).
+     */
     private String generateKodeBarang(String kategori) {
         String prefix;
         switch (kategori.toUpperCase()) {

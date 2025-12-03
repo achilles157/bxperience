@@ -6,13 +6,27 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import tampilan.util.UIStyle;
 
+/**
+ * Komponen ComboBox kustom dengan styling modern dan sudut membulat.
+ * Menggunakan renderer kustom untuk padding item.
+ *
+ * @param <E> Tipe elemen dalam ComboBox.
+ */
 public class RoundedComboBox<E> extends JComboBox<E> {
 
+    /**
+     * Konstruktor default.
+     */
     public RoundedComboBox() {
         super();
         initStyle();
     }
 
+    /**
+     * Konstruktor dengan item awal.
+     *
+     * @param items Array item untuk diisi ke ComboBox.
+     */
     public RoundedComboBox(E[] items) {
         super(items);
         initStyle();

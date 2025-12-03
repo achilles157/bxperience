@@ -5,6 +5,10 @@ import com.zaxxer.hikari.HikariDataSource;
 import java.sql.Connection;
 import java.sql.SQLException;
 
+/**
+ * Kelas utilitas untuk mengelola koneksi database menggunakan HikariCP.
+ * Menyediakan connection pooling untuk performa yang lebih baik.
+ */
 public class DatabaseConnection {
     private static final String URL = "jdbc:mysql://localhost:3306/consolerent";
     private static final String USER = "root";

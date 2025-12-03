@@ -84,7 +84,7 @@ public class BookingFormPanel extends RoundedPanel {
         addField("Tanggal:", tanggalDate, gbc, row++);
         addField("Jam Mulai:", jamCombo, gbc, row++);
         addField("Durasi (Menit):", durasiField, gbc, row++);
-        addField("Experience:", kategoriCombo, gbc, row++);
+        addField("Console:", kategoriCombo, gbc, row++);
         addField("Jumlah Unit:", jumlahField, gbc, row++);
     }
 

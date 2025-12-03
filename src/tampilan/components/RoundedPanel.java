@@ -4,14 +4,29 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
+/**
+ * Panel kustom dengan sudut membulat dan opsi efek bayangan (shadow).
+ * Cocok untuk container kartu atau bagian UI yang terpisah.
+ */
 public class RoundedPanel extends JPanel {
     private final int cornerRadius;
     private boolean shadow = true;
 
+    /**
+     * Membuat panel rounded dengan shadow default (aktif).
+     *
+     * @param radius Radius sudut panel.
+     */
     public RoundedPanel(int radius) {
         this(radius, true);
     }
 
+    /**
+     * Membuat panel rounded dengan opsi shadow.
+     *
+     * @param radius Radius sudut panel.
+     * @param shadow True jika ingin menampilkan bayangan, false jika tidak.
+     */
     public RoundedPanel(int radius, boolean shadow) {
         super();
         this.cornerRadius = radius;

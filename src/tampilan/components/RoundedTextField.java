@@ -6,13 +6,25 @@ import javax.swing.border.LineBorder;
 import java.awt.*;
 import tampilan.util.UIStyle;
 
+/**
+ * TextField kustom dengan sudut membulat dan border modern.
+ * Memberikan feedback visual saat fokus.
+ */
 public class RoundedTextField extends JTextField {
 
+    /**
+     * Membuat text field dengan jumlah kolom tertentu.
+     *
+     * @param columns Jumlah kolom (lebar).
+     */
     public RoundedTextField(int columns) {
         super(columns);
         initStyle();
     }
 
+    /**
+     * Membuat text field default.
+     */
     public RoundedTextField() {
         super();
         initStyle();

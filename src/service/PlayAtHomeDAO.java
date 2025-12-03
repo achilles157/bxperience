@@ -98,6 +98,9 @@ public class PlayAtHomeDAO {
         return counts;
     }
 
+    /**
+     * Kelas helper untuk menyimpan informasi stok dan harga item.
+     */
     public static class ItemStockInfo {
         public int totalAvailable;
         public double pricePerDay;
@@ -241,6 +244,9 @@ public class PlayAtHomeDAO {
         }
     }
 
+    /**
+     * Kelas helper untuk merepresentasikan item yang akan disewa dalam transaksi.
+     */
     public static class RentalItem {
         public String itemName;
         public int quantity;

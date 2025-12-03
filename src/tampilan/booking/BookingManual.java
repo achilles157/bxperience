@@ -12,11 +12,20 @@ import tampilan.components.*;
 import tampilan.booking.components.*;
 import service.BookingDAO;
 
+/**
+ * Panel untuk menangani proses booking manual.
+ * Memungkinkan pengguna untuk memilih area, kategori, waktu, dan durasi sewa,
+ * serta menghitung total harga secara otomatis.
+ */
 public class BookingManual extends JPanel {
     private BookingFormPanel formPanel;
     private RoundedTextField priceField, totalField;
     private BookingDAO bookingDAO;
 
+    /**
+     * Konstruktor untuk inisialisasi panel booking manual.
+     * Mengatur layout, scroll pane, dan komponen UI utama.
+     */
     public BookingManual() {
         bookingDAO = new BookingDAO();
         setLayout(new BorderLayout());
@@ -38,6 +47,12 @@ public class BookingManual extends JPanel {
         initComponents(contentPanel);
     }
 
+    /**
+     * Menginisialisasi komponen-komponen UI pada panel konten.
+     * Termasuk header, form panel, payment panel, dan tombol submit.
+     *
+     * @param contentPanel Panel tempat komponen akan ditambahkan.
+     */
     private void initComponents(JPanel contentPanel) {
         // Header
         RoundedPanel headerPanel = new RoundedPanel(20, false);
@@ -45,7 +60,7 @@ public class BookingManual extends JPanel {
         headerPanel.setBackground(UIStyle.PRIMARY);
         headerPanel.setPreferredSize(new Dimension(0, 80));
 
-        JLabel headerLabel = new JLabel("BOOKING EXPERIENCE", SwingConstants.CENTER);
+        JLabel headerLabel = new JLabel("BOOKING CONSOLE", SwingConstants.CENTER);
         headerLabel.setFont(UIStyle.fontBold(28));
         headerLabel.setForeground(Color.WHITE);
         headerLabel.setBorder(new EmptyBorder(18, 10, 18, 10));
@@ -87,6 +102,12 @@ public class BookingManual extends JPanel {
         setupListeners();
     }
 
+    /**
+     * Menginisialisasi panel informasi pembayaran.
+     * Menampilkan field untuk harga per menit dan total harga.
+     *
+     * @param panel Panel pembayaran yang akan diinisialisasi.
+     */
     private void initPaymentPanel(JPanel panel) {
         GridBagConstraints gbc = new GridBagConstraints();
         gbc.insets = new Insets(10, 10, 10, 10);
@@ -112,6 +133,16 @@ public class BookingManual extends JPanel {
         addField(panel, "Total Harga:", totalField, gbc, 2);
     }
 
+    /**
+     * Menambahkan field label dan komponen input ke dalam panel dengan layout
+     * GridBagLayout.
+     *
+     * @param panel     Panel tujuan.
+     * @param labelText Teks label.
+     * @param field     Komponen input (misalnya JTextField).
+     * @param gbc       GridBagConstraints untuk layout.
+     * @param row       Baris tempat komponen akan ditempatkan.
+     */
     private void addField(JPanel panel, String labelText, Component field, GridBagConstraints gbc, int row) {
         JLabel label = new JLabel(labelText);
         label.setFont(UIStyle.fontMedium(16));
@@ -123,6 +154,11 @@ public class BookingManual extends JPanel {
         panel.add(field, gbc);
     }
 
+    /**
+     * Mengatur listener untuk interaksi pengguna pada form.
+     * Menangani perubahan area, tanggal, waktu, durasi, kategori, dan jumlah unit
+     * untuk memperbarui ketersediaan dan harga secara dinamis.
+     */
     private void setupListeners() {
         // Load initial categories based on default area
         loadCategoriesByArea();
@@ -177,12 +213,20 @@ public class BookingManual extends JPanel {
         formPanel.addConsoleListener(e -> calculatePrice());
     }
 
+    /**
+     * Memperbarui visibilitas opsi konsol tambahan berdasarkan area yang dipilih.
+     * Opsi konsol hanya muncul jika area yang dipilih adalah "VIP Room".
+     */
     private void updateConsoleVisibility() {
         String area = formPanel.getArea();
         boolean isVIP = "VIP Room".equalsIgnoreCase(area);
         formPanel.setConsoleVisibility(isVIP);
     }
 
+    /**
+     * Memuat daftar kategori aset berdasarkan area yang dipilih.
+     * Menggunakan SwingWorker untuk mengambil data dari database secara asinkron.
+     */
     private void loadCategoriesByArea() {
         String area = formPanel.getArea();
         new SwingWorker<List<String>, Void>() {
@@ -203,6 +247,12 @@ public class BookingManual extends JPanel {
         }.execute();
     }
 
+    /**
+     * Memperbarui daftar pengalaman (kategori) yang tersedia berdasarkan tanggal,
+     * waktu, dan durasi yang dipilih.
+     * Melakukan pengecekan ketersediaan ke database dan menampilkan pesan jika
+     * tidak ada unit yang tersedia.
+     */
     private void updateAvailableExperiences() {
         // Only check availability if all fields are filled
         if (formPanel.getTanggal() == null || formPanel.getJam() == null || formPanel.getDurasi().isEmpty()) {
@@ -235,7 +285,7 @@ public class BookingManual extends JPanel {
                     formPanel.setKategoriItems(categories);
                     if (categories.isEmpty()) {
                         JOptionPane.showMessageDialog(BookingManual.this,
-                                "Tidak ada experience tersedia pada jam tersebut di area " + area + ".");
+                                "Tidak ada Console tersedia pada jam tersebut di area " + area + ".");
                     }
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -244,6 +294,13 @@ public class BookingManual extends JPanel {
         }.execute();
     }
 
+    /**
+     * Menghitung estimasi total harga booking.
+     * Mengambil harga per menit dari database dan mengalikannya dengan durasi dan
+     * jumlah unit.
+     * Menambahkan biaya tambahan jika kedua konsol (PS5 & Nintendo) dipilih di VIP
+     * Room.
+     */
     private void calculatePrice() {
         String category = formPanel.getKategori();
         String durationStr = formPanel.getDurasi();
@@ -288,6 +345,11 @@ public class BookingManual extends JPanel {
         }
     }
 
+    /**
+     * Memproses pengajuan booking.
+     * Memvalidasi input pengguna dan menyimpan data booking ke database.
+     * Menampilkan pesan sukses atau error berdasarkan hasil operasi.
+     */
     private void submitBooking() {
         if (formPanel.getNama().isEmpty() || formPanel.getTanggal() == null || formPanel.getDurasi().isEmpty() ||
                 formPanel.getKategori() == null || formPanel.getJumlah().isEmpty()) {

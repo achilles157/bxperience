@@ -15,6 +15,16 @@ import connection.DatabaseConnection;
  */
 public class LaporanDAO {
 
+    /**
+     * Mengambil laporan aset terlaris berdasarkan filter waktu dan jenis transaksi.
+     *
+     * @param from        Tanggal awal periode.
+     * @param to          Tanggal akhir periode.
+     * @param jenisFilter Filter jenis transaksi ("Booking", "PlayAtHome", atau
+     *                    "Semua").
+     * @return List data aset terlaris (peringkat, nama, kategori, total disewa).
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public List<Object[]> getAsetTerlaris(Date from, Date to, String jenisFilter) throws SQLException {
         List<Object[]> data = new ArrayList<>();
 
@@ -73,6 +83,16 @@ public class LaporanDAO {
         return data;
     }
 
+    /**
+     * Mengambil laporan pendapatan harian.
+     * Menggabungkan data dari Booking dan PlayAtHome.
+     *
+     * @param from Tanggal awal periode.
+     * @param to   Tanggal akhir periode.
+     * @return List data pendapatan (tanggal, jenis, jumlah transaksi, total
+     *         nominal).
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public List<Object[]> getPendapatan(Date from, Date to) throws SQLException {
         List<Object[]> data = new ArrayList<>();
         String sqlBooking = "SELECT DATE(created_at) as tanggal, 'Booking' as jenis, " +
@@ -111,6 +131,16 @@ public class LaporanDAO {
         return data;
     }
 
+    /**
+     * Mengambil laporan pelanggan paling aktif.
+     *
+     * @param from   Tanggal awal periode.
+     * @param to     Tanggal akhir periode.
+     * @param sortBy Kriteria pengurutan ("Total Belanja" atau "Jumlah Transaksi").
+     * @return List data pelanggan (peringkat, nama, instagram, total transaksi,
+     *         total belanja).
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public List<Object[]> getPelangganAktif(Date from, Date to, String sortBy) throws SQLException {
         List<Object[]> data = new ArrayList<>();
         String sortColumn = "total_belanja"; // Default
@@ -160,6 +190,13 @@ public class LaporanDAO {
         return data;
     }
 
+    /**
+     * Mengambil ringkasan status aset saat ini.
+     * Menghitung jumlah total, tersedia, dan sedang disewa per kategori.
+     *
+     * @return List data status aset (kategori, total, tersedia, disewakan).
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public List<Object[]> getStatusAset() throws SQLException {
         List<Object[]> data = new ArrayList<>();
         String query = "SELECT kategori, COUNT(*) as total, " +
@@ -183,6 +220,13 @@ public class LaporanDAO {
         return data;
     }
 
+    /**
+     * Mengambil laporan kategori aset dengan pendapatan tertinggi.
+     *
+     * @return List data kategori terlaris (kategori, jumlah transaksi, total
+     *         pendapatan).
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public List<Object[]> getKategoriTerlaris() throws SQLException {
         List<Object[]> data = new ArrayList<>();
         String query = "SELECT a.kategori, " +

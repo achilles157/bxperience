@@ -142,6 +142,16 @@ public class BookingDAO {
      * @return Number of available assets
      * @throws SQLException if a database error occurs
      */
+    /**
+     * Memeriksa jumlah aset yang tersedia untuk kategori dan waktu tertentu.
+     *
+     * @param category        Kategori aset.
+     * @param date            Tanggal booking.
+     * @param time            Waktu mulai booking.
+     * @param durationMinutes Durasi sewa dalam menit.
+     * @return Jumlah aset yang tersedia.
+     * @throws SQLException jika terjadi kesalahan database.
+     */
     public int checkAvailabilityCount(String category, java.sql.Date date, String time, int durationMinutes)
             throws SQLException {
         String query = "SELECT COUNT(*) as available FROM aset a " +
@@ -182,6 +192,21 @@ public class BookingDAO {
      *                    for now)
      * @return true if successful
      * @throws SQLException if a database error occurs
+     */
+    /**
+     * Membuat transaksi booking baru.
+     * Melakukan pengecekan ketersediaan aset sebelum menyimpan data booking.
+     *
+     * @param nama            Nama penyewa.
+     * @param noHp            Nomor HP penyewa.
+     * @param date            Tanggal booking.
+     * @param time            Waktu mulai booking.
+     * @param durationMinutes Durasi sewa dalam menit.
+     * @param category        Kategori aset yang disewa.
+     * @param quantity        Jumlah unit yang disewa.
+     * @param extraConsole    Status apakah menyewa konsol tambahan (untuk VIP).
+     * @return true jika booking berhasil dibuat, false jika gagal.
+     * @throws SQLException jika terjadi kesalahan database atau aset tidak cukup.
      */
     public boolean createBooking(String nama, String noHp,
             java.sql.Date date, String time, int durationMinutes,

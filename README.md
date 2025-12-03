@@ -1,7 +1,7 @@
-# BXperience Project
+# Consolerent Manager Project
 
 ## Overview
-BXperience is a Java Swing application for managing rental assets and bookings. It supports two main business lines:
+Consolerent Manager is a Java Swing application for managing rental assets and bookings. It supports two main business lines:
 1.  **Booking Experience**: Hourly rental of assets (Simulators, Consoles, VR) on-site.
 2.  **Play At Home**: Daily rental of assets delivered to the customer's location.
 
