@@ -57,7 +57,7 @@ public class LaporanPelangganPanel extends JPanel {
         headerPanel.setPreferredSize(new Dimension(0, 80));
         headerPanel.setBorder(BorderFactory.createEmptyBorder(0, 30, 0, 30));
 
-        JLabel titleLabel = new JLabel("LAPORAN AKTIVITAS PELANGGAN", SwingConstants.CENTER);
+        JLabel titleLabel = new JLabel("LAPORAN KEANGGOTAAN", SwingConstants.CENTER);
         titleLabel.setFont(UIStyle.fontBold(24));
         titleLabel.setForeground(Color.WHITE);
         headerPanel.add(titleLabel, BorderLayout.CENTER);
@@ -98,7 +98,8 @@ public class LaporanPelangganPanel extends JPanel {
         JPanel reportPanel = new JPanel(new BorderLayout(10, 10));
         reportPanel.setOpaque(false);
 
-        String[] columns = { "Peringkat", "Nama Pelanggan", "Instagram", "Jumlah Transaksi", "Total Pengeluaran" };
+        String[] columns = { "Peringkat", "Nama Pelanggan", "Kontak (HP/Telp)", "Jumlah Transaksi",
+                "Total Pengeluaran" };
         tableModel = new DefaultTableModel(columns, 0);
         reportTable = new JTable(tableModel);
         UIStyle.styleTable(reportTable);
@@ -170,7 +171,7 @@ public class LaporanPelangganPanel extends JPanel {
                     tempModel.addRow(new Object[] {
                             row[0],
                             row[1],
-                            row[2],
+                            row[2], // Kontak
                             row[3],
                             currencyFormat.format(row[4])
                     });
@@ -206,7 +207,7 @@ public class LaporanPelangganPanel extends JPanel {
         Vector<String> columns = new Vector<>();
         columns.add("Peringkat");
         columns.add("Nama Pelanggan");
-        columns.add("Instagram");
+        columns.add("Kontak (HP/Telp)");
         columns.add("Jumlah Transaksi");
         columns.add("Total Pengeluaran");
         return columns;
@@ -223,7 +224,7 @@ public class LaporanPelangganPanel extends JPanel {
         fileChooser.setDialogTitle("Simpan Laporan PDF");
         fileChooser.setSelectedFile(
                 new File(
-                        "Laporan_Aktivitas_Pelanggan_" + new SimpleDateFormat("yyyyMMdd").format(new Date()) + ".pdf"));
+                        "Laporan_Keanggotaan_" + new SimpleDateFormat("yyyyMMdd").format(new Date()) + ".pdf"));
 
         if (fileChooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             File file = fileChooser.getSelectedFile();
@@ -265,7 +266,7 @@ public class LaporanPelangganPanel extends JPanel {
                 document.add(companyAddress);
 
                 // Add Title
-                Paragraph title = new Paragraph("Laporan Aktivitas Pelanggan",
+                Paragraph title = new Paragraph("Laporan Keanggotaan",
                         new Font(Font.FontFamily.HELVETICA, 16, Font.BOLD));
                 title.setAlignment(Element.ALIGN_CENTER);
                 title.setSpacingAfter(20);
@@ -284,7 +285,7 @@ public class LaporanPelangganPanel extends JPanel {
                 pdfTable.setSpacingAfter(10f);
 
                 // Table Header
-                String[] headers = { "Peringkat", "Nama Pelanggan", "Instagram", "Jumlah Transaksi",
+                String[] headers = { "Peringkat", "Nama Pelanggan", "Kontak (HP/Telp)", "Jumlah Transaksi",
                         "Total Pengeluaran" };
                 for (String header : headers) {
                     PdfPCell cell = new PdfPCell(

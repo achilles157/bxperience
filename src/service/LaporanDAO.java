@@ -150,20 +150,20 @@ public class LaporanDAO {
 
         String finalQuery = "SELECT " +
                 "    t.nama, " +
-                "    t.instagram, " +
+                "    t.kontak, " +
                 "    COUNT(*) as total_transaksi, " +
                 "    SUM(t.total_harga) as total_belanja " +
                 "FROM ( " +
-                "    (SELECT nama, instagram, total_harga " +
+                "    (SELECT nama, no_hp as kontak, total_harga " +
                 "     FROM booking " +
                 "     WHERE status = 'completed' AND DATE(created_at) BETWEEN ? AND ?) " +
                 "    UNION ALL " +
-                "    (SELECT nama, instagram, total_harga " +
+                "    (SELECT nama, no_telp as kontak, total_harga " +
                 "     FROM playathome " +
                 "     WHERE status = 'selesai' AND tgl_selesai BETWEEN ? AND ?) " +
                 ") as t " +
                 "WHERE t.nama IS NOT NULL AND t.nama != '' " +
-                "GROUP BY t.nama, t.instagram " +
+                "GROUP BY t.nama, t.kontak " +
                 "ORDER BY " + sortColumn + " DESC";
 
         try (Connection conn = DatabaseConnection.getConnection();
@@ -180,7 +180,7 @@ public class LaporanDAO {
                     data.add(new Object[] {
                             peringkat++,
                             rs.getString("nama"),
-                            rs.getString("instagram"),
+                            rs.getString("kontak"),
                             rs.getInt("total_transaksi"),
                             rs.getDouble("total_belanja")
                     });
@@ -253,6 +253,65 @@ public class LaporanDAO {
                         rs.getInt("jumlah_transaksi"),
                         rs.getDouble("total_pendapatan")
                 });
+            }
+        }
+        return data;
+    }
+
+    /**
+     * Mengambil laporan kategori aset dengan pendapatan tertinggi berdasarkan
+     * filter bulan dan tahun.
+     *
+     * @param month Bulan (0-11) jika menggunakan Calendar.MONTH, tapi biasanya
+     *              input user 1-12.
+     *              Mari kita asumsikan input 0 = Semua Bulan, 1-12 = Bulan
+     *              spesifik.
+     * @param year  Tahun filter.
+     * @return List data kategori terlaris.
+     * @throws SQLException jika terjadi kesalahan database.
+     */
+    public List<Object[]> getKategoriTerlaris(int month, int year) throws SQLException {
+        // month inputs: 0 (JMonthChooser index) = January?
+        // JMonthChooser usually returns 0-11. SQL expects 1-12.
+        // Let's assume input is 1-12.
+
+        List<Object[]> data = new ArrayList<>();
+        String query = "SELECT a.kategori, " +
+                "COUNT(t.id_transaksi) as jumlah_transaksi, " +
+                "SUM(t.total_harga) as total_pendapatan " +
+                "FROM (" +
+                "  SELECT bd.id_booking as id_transaksi, bd.id_aset, bd.subtotal as total_harga " +
+                "  FROM booking_detail bd " +
+                "  JOIN booking b ON bd.id_booking = b.id_booking " +
+                "  WHERE b.status = 'completed' " +
+                "  AND MONTH(b.tanggal) = ? AND YEAR(b.tanggal) = ? " +
+                "  UNION ALL " +
+                "  SELECT pd.id_playhome, pd.id_aset, pd.subtotal " +
+                "  FROM playathome_detail pd " +
+                "  JOIN playathome p ON pd.id_playhome = p.id_playhome " +
+                "  WHERE p.status = 'selesai' " +
+                "  AND MONTH(p.tgl_selesai) = ? AND YEAR(p.tgl_selesai) = ? " +
+                ") t " +
+                "JOIN aset a ON t.id_aset = a.id_aset " +
+                "GROUP BY a.kategori " +
+                "ORDER BY total_pendapatan DESC";
+
+        try (Connection conn = DatabaseConnection.getConnection();
+                PreparedStatement pst = conn.prepareStatement(query)) {
+
+            pst.setInt(1, month);
+            pst.setInt(2, year);
+            pst.setInt(3, month);
+            pst.setInt(4, year);
+
+            try (ResultSet rs = pst.executeQuery()) {
+                while (rs.next()) {
+                    data.add(new Object[] {
+                            rs.getString("kategori"),
+                            rs.getInt("jumlah_transaksi"),
+                            rs.getDouble("total_pendapatan")
+                    });
+                }
             }
         }
         return data;

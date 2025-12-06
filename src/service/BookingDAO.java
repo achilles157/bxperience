@@ -362,4 +362,63 @@ public class BookingDAO {
             }
         }
     }
+
+    /**
+     * Automatically completes bookings that have passed their end time.
+     * Updates asset status to available (1) and booking status to 'completed'.
+     */
+    public void autoCompleteBookings() {
+        String selectExpired = "SELECT id_booking FROM booking " +
+                "WHERE status IN ('confirmed', 'pending') " +
+                "AND TIMESTAMP(tanggal, jam) + INTERVAL durasi_menit MINUTE < NOW()";
+
+        String updateBooking = "UPDATE booking SET status = 'completed' WHERE id_booking = ?";
+        String getDetails = "SELECT id_aset FROM booking_detail WHERE id_booking = ?";
+        String updateAsset = "UPDATE aset SET status_tersedia = 1 WHERE id_aset = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            List<Integer> expiredIds = new ArrayList<>();
+            try (Statement st = conn.createStatement();
+                    ResultSet rs = st.executeQuery(selectExpired)) {
+                while (rs.next()) {
+                    expiredIds.add(rs.getInt("id_booking"));
+                }
+            }
+
+            if (expiredIds.isEmpty())
+                return;
+
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstBooking = conn.prepareStatement(updateBooking);
+                    PreparedStatement pstDetails = conn.prepareStatement(getDetails);
+                    PreparedStatement pstAsset = conn.prepareStatement(updateAsset)) {
+
+                for (int idBooking : expiredIds) {
+                    // Update Booking Status
+                    pstBooking.setInt(1, idBooking);
+                    pstBooking.executeUpdate();
+
+                    // Get Assets and make them available
+                    pstDetails.setInt(1, idBooking);
+                    try (ResultSet rsAssets = pstDetails.executeQuery()) {
+                        while (rsAssets.next()) {
+                            String idAset = rsAssets.getString("id_aset");
+                            pstAsset.setString(1, idAset);
+                            pstAsset.addBatch();
+                        }
+                    }
+                }
+                pstAsset.executeBatch();
+                conn.commit();
+                System.out.println("Auto-completed " + expiredIds.size() + " bookings.");
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+    }
 }

@@ -10,6 +10,8 @@ import tampilan.aset.AsetManajemenPanel;
 import tampilan.utama.SidebarShell;
 import tampilan.monitoring.MonitoringPanel;
 import tampilan.laporan.LaporanContainerPanel;
+import service.BookingDAO;
+import service.PlayAtHomeDAO;
 import java.awt.*;
 
 public class MainFrame extends JFrame {
@@ -23,6 +25,10 @@ public class MainFrame extends JFrame {
     }
 
     public MainFrame() {
+        // Auto-complete expired transactions on startup
+        new BookingDAO().autoCompleteBookings();
+        new PlayAtHomeDAO().autoCompleteRentals();
+
         setTitle("Consolerent Indonesia");
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setSize(1024, 768);

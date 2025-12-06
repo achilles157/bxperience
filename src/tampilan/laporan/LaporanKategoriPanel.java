@@ -18,21 +18,29 @@ import java.io.IOException;
 import java.net.URL;
 import java.text.NumberFormat;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import tampilan.components.RoundedPanel;
+import tampilan.components.SimpleBarChartPanel;
 import tampilan.util.UIStyle;
 import service.LaporanDAO;
+
+import com.toedter.calendar.JMonthChooser;
+import com.toedter.calendar.JYearChooser;
 
 public class LaporanKategoriPanel extends JPanel {
 
     private JTable table;
     private DefaultTableModel model;
     private NumberFormat currencyFormat;
+    private SimpleBarChartPanel chartPanel;
+    private JMonthChooser monthChooser;
+    private JYearChooser yearChooser;
 
     public LaporanKategoriPanel() {
         currencyFormat = NumberFormat
@@ -48,12 +56,42 @@ public class LaporanKategoriPanel extends JPanel {
         headerPanel.setBackground(UIStyle.CARD_BG);
         headerPanel.setBorder(new EmptyBorder(15, 20, 15, 20));
 
-        JLabel titleLabel = new JLabel("Laporan Transaksi per Kategori");
+        JLabel titleLabel = new JLabel("Laporan Analisa Kategori");
         titleLabel.setFont(UIStyle.fontBold(24));
         titleLabel.setForeground(UIStyle.PRIMARY);
-        headerPanel.add(titleLabel, BorderLayout.NORTH);
+        headerPanel.add(titleLabel, BorderLayout.WEST);
+
+        // Filter Panel (Inside Header, East side)
+        JPanel filterPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        filterPanel.setOpaque(false);
+
+        JLabel filterLabel = new JLabel("Periode: ");
+        filterLabel.setFont(UIStyle.fontMedium(14));
+
+        monthChooser = new JMonthChooser();
+        yearChooser = new JYearChooser();
+
+        // Style choosers (basic)
+        monthChooser.setFont(UIStyle.fontRegular(12));
+        yearChooser.setFont(UIStyle.fontRegular(12));
+
+        filterPanel.add(filterLabel);
+        filterPanel.add(monthChooser);
+        filterPanel.add(yearChooser);
+
+        JButton filterButton = UIStyle.modernButton("Filter");
+        filterButton.setFont(UIStyle.fontMedium(12));
+        filterButton.setPreferredSize(new Dimension(80, 30));
+        filterButton.addActionListener(e -> loadData());
+
+        filterPanel.add(filterButton);
+        headerPanel.add(filterPanel, BorderLayout.EAST);
 
         add(headerPanel, BorderLayout.NORTH);
+
+        // Chart Panel
+        chartPanel = new SimpleBarChartPanel();
+        chartPanel.setBorder(new EmptyBorder(0, 0, 20, 0));
 
         // Table
         model = new DefaultTableModel(new String[] { "Kategori", "Jumlah Transaksi", "Total Pendapatan" }, 0);
@@ -68,7 +106,15 @@ public class LaporanKategoriPanel extends JPanel {
         contentPanel.setLayout(new BorderLayout());
         contentPanel.setBackground(UIStyle.CARD_BG);
         contentPanel.setBorder(new EmptyBorder(20, 20, 20, 20));
-        contentPanel.add(scrollPane, BorderLayout.CENTER);
+
+        // Use a JPanel with BorderLayout inside contentPanel to hold Chart (Top) and
+        // Table (Center)
+        JPanel innerPanel = new JPanel(new BorderLayout(0, 20));
+        innerPanel.setOpaque(false);
+        innerPanel.add(chartPanel, BorderLayout.NORTH);
+        innerPanel.add(scrollPane, BorderLayout.CENTER);
+
+        contentPanel.add(innerPanel, BorderLayout.CENTER);
 
         add(contentPanel, BorderLayout.CENTER);
 
@@ -93,17 +139,28 @@ public class LaporanKategoriPanel extends JPanel {
     }
 
     private void loadData() {
+        // Get month (0-11) + 1 for SQL
+        int month = monthChooser.getMonth() + 1;
+        int year = yearChooser.getYear();
+
         new SwingWorker<Void, Void>() {
+            List<String> categories = new ArrayList<>();
+            List<Double> revenues = new ArrayList<>();
+
             @Override
             protected Void doInBackground() throws Exception {
                 model.setRowCount(0);
                 LaporanDAO dao = new LaporanDAO();
-                List<Object[]> data = dao.getKategoriTerlaris();
+                // Use filtered method
+                List<Object[]> data = dao.getKategoriTerlaris(month, year);
 
                 for (Object[] row : data) {
                     String cat = (String) row[0];
                     int count = (int) row[1];
                     double revenue = (double) row[2];
+
+                    categories.add(cat);
+                    revenues.add(revenue);
 
                     model.addRow(new Object[] {
                             cat,
@@ -118,6 +175,7 @@ public class LaporanKategoriPanel extends JPanel {
             protected void done() {
                 try {
                     get();
+                    chartPanel.setData(categories, revenues);
                 } catch (Exception e) {
                     e.printStackTrace();
                     UIStyle.showErrorMessage(LaporanKategoriPanel.this, "Gagal memuat data: " + e.getMessage());

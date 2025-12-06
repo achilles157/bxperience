@@ -50,7 +50,7 @@ public class SidebarShell extends JPanel {
             label.setBorder(BorderFactory.createEmptyBorder(10, 15, 10, 15));
             label.setMaximumSize(new Dimension(180, 40));
             label.setHorizontalAlignment(SwingConstants.LEFT);
-            label.setOpaque(true);
+            label.setOpaque(false);
             label.setBackground(new Color(0, 0, 0, 0));
             label.setForeground(Color.WHITE);
 

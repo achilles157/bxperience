@@ -215,11 +215,19 @@ public class PlayAtHomeDAO {
                                 "UPDATE aset SET status_tersedia = 0 WHERE id_aset = ?")) {
 
                     for (String idAset : assetIds) {
+                        // Calculate duration in days
+                        long diff = tglSelesai.getTime() - tglMulai.getTime();
+                        long days = java.util.concurrent.TimeUnit.DAYS.convert(diff,
+                                java.util.concurrent.TimeUnit.MILLISECONDS);
+                        if (days < 1)
+                            days = 1; // Minimum 1 day rental
+
                         // Insert detail
                         detailStmt.setInt(1, idPlayhome);
                         detailStmt.setString(2, idAset);
                         detailStmt.setInt(3, 1);
-                        detailStmt.setDouble(4, item.pricePerDay);
+                        double subtotal = item.pricePerDay * days;
+                        detailStmt.setDouble(4, subtotal);
                         detailStmt.executeUpdate();
 
                         // Update asset status
@@ -245,6 +253,64 @@ public class PlayAtHomeDAO {
             if (conn != null) {
                 conn.close();
             }
+        }
+    }
+
+    /**
+     * Automatically completes rentals that have passed their end date.
+     * Updates asset status to available (1) and rental status to 'selesai'.
+     */
+    public void autoCompleteRentals() {
+        String selectExpired = "SELECT id_playhome FROM playathome " +
+                "WHERE status = 'aktif' AND tgl_selesai < CURDATE()";
+
+        String updateRental = "UPDATE playathome SET status = 'selesai' WHERE id_playhome = ?";
+        String getDetails = "SELECT id_aset FROM playathome_detail WHERE id_playhome = ?";
+        String updateAsset = "UPDATE aset SET status_tersedia = 1 WHERE id_aset = ?";
+
+        try (Connection conn = DatabaseConnection.getConnection()) {
+            List<Integer> expiredIds = new ArrayList<>();
+            try (Statement st = conn.createStatement();
+                    ResultSet rs = st.executeQuery(selectExpired)) {
+                while (rs.next()) {
+                    expiredIds.add(rs.getInt("id_playhome"));
+                }
+            }
+
+            if (expiredIds.isEmpty())
+                return;
+
+            conn.setAutoCommit(false);
+            try (PreparedStatement pstRental = conn.prepareStatement(updateRental);
+                    PreparedStatement pstDetails = conn.prepareStatement(getDetails);
+                    PreparedStatement pstAsset = conn.prepareStatement(updateAsset)) {
+
+                for (int idRental : expiredIds) {
+                    // Update Rental Status
+                    pstRental.setInt(1, idRental);
+                    pstRental.executeUpdate();
+
+                    // Get Assets and make them available
+                    pstDetails.setInt(1, idRental);
+                    try (ResultSet rsAssets = pstDetails.executeQuery()) {
+                        while (rsAssets.next()) {
+                            String idAset = rsAssets.getString("id_aset");
+                            pstAsset.setString(1, idAset);
+                            pstAsset.addBatch();
+                        }
+                    }
+                }
+                pstAsset.executeBatch();
+                conn.commit();
+                System.out.println("Auto-completed " + expiredIds.size() + " playathome rentals.");
+            } catch (SQLException e) {
+                conn.rollback();
+                e.printStackTrace();
+            } finally {
+                conn.setAutoCommit(true);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
         }
     }
 
